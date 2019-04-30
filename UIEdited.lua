@@ -1,3 +1,24 @@
+
+local cur_scriptname = GetScriptName()
+local cur_version = "1.3.2"
+local git_version = "https://raw.githubusercontent.com/itisluiz/aimware_blockbot/master/version.txt"
+local git_repository = "https://raw.githubusercontent.com/itisluiz/aimware_blockbot/master/blockbot.lua"
+local app_awusers = "http://api.shadyretard.io/awusers"
+
+
+-- Check for updates
+local function git_update()
+	if cur_version ~= http.Get(git_version) then
+		local this_script = file.Open(cur_scriptname, "w")
+		this_script:Write(http.Get(git_repository))
+		this_script:Close()
+		print("[Lua Scripting] " .. cur_scriptname .. " has updated itself from version " .. cur_version .. " to " .. http.Get(git_version))
+		print("[Lua Scripting] Please reload " .. cur_scriptname)
+	else
+		print("[Lua Scripting] " .. cur_scriptname .. " is up-to-date")
+	end
+end
+
 --[[
 	SenseUI by Ruppet
 	====================================
@@ -1954,7 +1975,7 @@ local shotgun_select = 1;
 local rifle_select = 1;
 local smg_select = 1;
 local pistol_select = 1;
-local legit_select = 1;
+local lselect = 1;
 local knife_select = 1;
 local pselect = 1;
 local aa_choose = 1;
@@ -2237,8 +2258,8 @@ function draw_callback()
 			if SenseUI.BeginGroup( "legitaim", "Legit Aimbot", 25, 310, 235, 205 ) then
 				SenseUI.SetGroupMoveable( true );
 				SenseUI.SetGroupSizeable( true );
-				legit_select = SenseUI.Combo("", { "Pistol", "SMG", "Rifle", "Shotgun", "Sniper" }, legit_select );
-				if legit_select == 1 then
+				lselect = SenseUI.Combo("", { "Pistol", "SMG", "Rifle", "Shotgun", "Sniper" }, lselect );
+				if lselect == 1 then
 				
 				local pistol_awall = (gui.GetValue("lbot_pistol_autowall")); 
 				local pistol_fov = (gui.GetValue("lbot_pistol_fov") * 3.33333333333333);
@@ -2251,13 +2272,12 @@ function draw_callback()
 				local pistol_rcshori = (gui.GetValue("lbot_pistol_rcs_horiz"));
 				local pistol_hitboxpri = (gui.GetValue("lbot_pistol_hitbox") + 1);
 				local pistol_hboxselect = (gui.GetValue("lbot_pistol_hitboxselect") + 1);
-				local p_fshotdelayt =  (gui.GetValue("lbot_pistol_fsd"));
 				
 				pistol_fov = SenseUI.Slider("FOV", 0.00, 100.00, "°", "Off", "Rage Legit", true, pistol_fov)
 				gui.SetValue("lbot_pistol_fov", pistol_fov / 3.33333333333333)
 				
 				SenseUI.Label("FOV Type");
-				pistol_stype = SenseUI.Combo("", { "Dynamic", "Static" }, pistol_stype);
+				pistol_stype = SenseUI.Combo("1", { "Dynamic", "Static" }, pistol_stype);
 				gui.SetValue("lbot_pistol_smoothtype", pistol_stype-1)
 				
 				pistol_smooth = SenseUI.Slider("Smooth", 0.00, 100.00, "%", "Rage", "Legit", true, pistol_smooth)
@@ -2275,21 +2295,19 @@ function draw_callback()
 				pistol_rcshori = SenseUI.Slider("RCS Horizontal", 0.00, 100.00, "%", "Off", "", true, pistol_rcshori)
 				gui.SetValue("lbot_pistol_rcs_horiz", pistol_rcshori)
 			
-				
-				SenseUI.Label("Hitbox Priority/Selection");
-				pistol_hitboxpri = SenseUI.Combo("", { "Head", "Chest", "Stomach" }, pistol_hitboxpri);
+				SenseUI.Label("Hitbox Priority/Selection")
+				pistol_hitboxpri = SenseUI.Combo("2", { "Head", "Chest", "Stomach" }, pistol_hitboxpri)
 				gui.SetValue("lbot_pistol_hitbox", pistol_hitboxpri - 1)
 
-				pistol_hboxselect = SenseUI.Combo("", {"Priority", "Dynamic", "Nearest"}, pistol_hboxselect);
-				gui.SetValue("lbot_pistol_hitboxselect", pistol_hboxselect - 1);
+				pistol_hboxselect = SenseUI.Combo("3", {"Priority", "Dynamic", "Nearest"}, pistol_hboxselect)
+				gui.SetValue("lbot_pistol_hitboxselect", pistol_hboxselect - 1)
 				
 				pistol_awall = SenseUI.Checkbox("AutoWall", pistol_awall)
 				gui.SetValue("lbot_pistol_autowall", pistol_awall)
 				
 				
-				
 				end
-				if legit_select == 2 then
+				if lselect == 2 then
 				
 				local smg_awall = (gui.GetValue("lbot_smg_autowall")); 
 				local smg_fov = (gui.GetValue("lbot_smg_fov") * 3.33333333333333);
@@ -2307,7 +2325,7 @@ function draw_callback()
 				gui.SetValue("lbot_smg_fov", smg_fov / 3.33333333333333)
 			
 				SenseUI.Label("FOV Type");
-				smg_stype = SenseUI.Combo("", { "Dynamic", "Static" }, smg_stype);
+				smg_stype = SenseUI.Combo("4", { "Dynamic", "Static" }, smg_stype);
 				gui.SetValue("lbot_smg_smoothtype", smg_stype-1)
 			
 				smg_smooth = SenseUI.Slider("Smooth", 0.00, 100.00, "%", "Rage", "Legit", true, smg_smooth)
@@ -2326,17 +2344,17 @@ function draw_callback()
 				gui.SetValue("lbot_smg_rcs_horiz", smg_rcshori)
 				
 				SenseUI.Label("Hitbox Priority/Selection");
-				smg_hitboxpri = SenseUI.Combo("", { "Head", "Chest", "Stomach" }, smg_hitboxpri);
+				smg_hitboxpri = SenseUI.Combo("5", { "Head", "Chest", "Stomach" }, smg_hitboxpri)
 				gui.SetValue("lbot_smg_hitbox", smg_hitboxpri - 1)
 
-				smg_hboxselect = SenseUI.Combo("", {"Priority", "Dynamic", "Nearest"}, smg_hboxselect);
+				smg_hboxselect = SenseUI.Combo("6", {"Priority", "Dynamic", "Nearest"}, smg_hboxselect)
 				gui.SetValue("lbot_smg_hitboxselect", smg_hboxselect - 1);
 				
 				
 				smg_awall = SenseUI.Checkbox("AutoWall", smg_awall)
 				gui.SetValue("lbot_smg_autowall", smg_awall)
 				end
-				if legit_select == 3 then
+				if lselect == 3 then
 				
 				local rifle_awall = (gui.GetValue("lbot_rifle_autowall")); 
 				local rifle_fov = (gui.GetValue("lbot_rifle_fov") * 3.33333333333333);
@@ -2354,7 +2372,7 @@ function draw_callback()
 				gui.SetValue("lbot_rifle_fov", rifle_fov / 3.33333333333333)
 			
 				SenseUI.Label("FOV Type");
-				rifle_stype = SenseUI.Combo("", { "Dynamic", "Static" }, rifle_stype);
+				rifle_stype = SenseUI.Combo("7", { "Dynamic", "Static" }, rifle_stype);
 				gui.SetValue("lbot_rifle_smoothtype", rifle_stype-1)
 				
 				rifle_smooth = SenseUI.Slider("Smooth", 0.00, 100.00, "%", "Rage", "Legit", true, rifle_smooth)
@@ -2374,16 +2392,19 @@ function draw_callback()
 				gui.SetValue("lbot_rifle_rcs_horiz", rifle_rcshori)
 				
 				SenseUI.Label("Hitbox Priority/Selection");
-				rifle_hitboxpri = SenseUI.Combo("", { "Head", "Chest", "Stomach" }, rifle_hitboxpri);
+				rifle_hitboxpri = SenseUI.Combo("8", { "Head", "Chest", "Stomach" }, rifle_hitboxpri)
 				gui.SetValue("lbot_rifle_hitbox", rifle_hitboxpri - 1)
+				
 
-				rifle_hboxselect = SenseUI.Combo("", {"Priority", "Dynamic", "Nearest"}, rifle_hboxselect);
+					
+
+				rifle_hboxselect = SenseUI.Combo("9", {"Priority", "Dynamic", "Nearest"}, rifle_hboxselect)
 				gui.SetValue("lbot_rifle_hitboxselect", rifle_hboxselect - 1);
 				
 				rifle_awall = SenseUI.Checkbox("AutoWall", rifle_awall)
 				gui.SetValue("lbot_rifle_autowall", rifle_awall)
 				end
-				if legit_select == 4 then
+				if lselect == 4 then
 				
 				local shotgun_awall = (gui.GetValue("lbot_shotgun_autowall")); 
 				local shotgun_fov = (gui.GetValue("lbot_shotgun_fov") * 3.33333333333333);
@@ -2401,7 +2422,7 @@ function draw_callback()
 				gui.SetValue("lbot_shotgun_fov", shotgun_fov / 3.33333333333333)
 			
 				SenseUI.Label("FOV Type");
-				shotgun_stype = SenseUI.Combo("", { "Dynamic", "Static" }, shotgun_stype);
+				shotgun_stype = SenseUI.Combo("10", { "Dynamic", "Static" }, shotgun_stype);
 				gui.SetValue("lbot_shotgun_smoothtype", shotgun_stype-1)
 
 				shotgun_smooth = SenseUI.Slider("Smooth", 0.00, 100.00, "%", "Rage", "Legit", true, shotgun_smooth)
@@ -2420,16 +2441,16 @@ function draw_callback()
 				gui.SetValue("lbot_shotgun_rcs_horiz", shotgun_rcshori)
 				
 				SenseUI.Label("Hitbox Priority/Selection");
-				shotgun_hitboxpri = SenseUI.Combo("", { "Head", "Chest", "Stomach" }, shotgun_hitboxpri);
+				shotgun_hitboxpri = SenseUI.Combo("11", { "Head", "Chest", "Stomach" }, shotgun_hitboxpri);
 				gui.SetValue("lbot_shotgun_hitbox", shotgun_hitboxpri - 1)
 
-				shotgun_hboxselect = SenseUI.Combo("", {"Priority", "Dynamic", "Nearest"}, shotgun_hboxselect);
+				shotgun_hboxselect = SenseUI.Combo("12", {"Priority", "Dynamic", "Nearest"}, shotgun_hboxselect);
 				gui.SetValue("lbot_shotgun_hitboxselect", shotgun_hboxselect - 1);
 				
 				shotgun_awall = SenseUI.Checkbox("AutoWall", shotgun_awall)
 				gui.SetValue("lbot_shotgun_autowall", shotgun_awall)
 				end
-				if legit_select == 5 then
+				if lselect == 5 then
 				
 				local sniper_awall = (gui.GetValue("lbot_sniper_autowall")); 
 				local sniper_fov = (gui.GetValue("lbot_sniper_fov") * 3.33333333333333);
@@ -2447,7 +2468,7 @@ function draw_callback()
 				gui.SetValue("lbot_sniper_fov", sniper_fov / 3.33333333333333)
 				
 				SenseUI.Label("FOV Type");
-				sniper_stype = SenseUI.Combo("", { "Dynamic", "Static" }, sniper_stype);
+				sniper_stype = SenseUI.Combo("13", { "Dynamic", "Static" }, sniper_stype);
 				gui.SetValue("lbot_sniper_smoothtype", sniper_stype-1)
 			
 				sniper_smooth = SenseUI.Slider("Smooth", 0.00, 100.00, "%", "Rage", "Legit", true, sniper_smooth)
@@ -2466,17 +2487,16 @@ function draw_callback()
 				gui.SetValue("lbot_sniper_rcs_horiz", sniper_rcshori)
 				
 				SenseUI.Label("Hitbox Priority/Selection");
-				sniper_hitboxpri = SenseUI.Combo("", { "Head", "Chest", "Stomach" }, sniper_hitboxpri);
+				sniper_hitboxpri = SenseUI.Combo("14", { "Head", "Chest", "Stomach" }, sniper_hitboxpri);
 				gui.SetValue("lbot_sniper_hitbox", sniper_hitboxpri - 1)
 
-				sniper_hboxselect = SenseUI.Combo("", {"Priority", "Dynamic", "Nearest"}, sniper_hboxselect);
+				sniper_hboxselect = SenseUI.Combo("15", {"Priority", "Dynamic", "Nearest"}, sniper_hboxselect);
 				gui.SetValue("lbot_sniper_hitboxselect", sniper_hboxselect - 1);
 				
 				sniper_awall = SenseUI.Checkbox("AutoWall", sniper_awall)
 				gui.SetValue("lbot_sniper_autowall", sniper_awall)
 				end
 				SenseUI.EndGroup();
-			
 			end
 			if SenseUI.BeginGroup( "EXTRA", "Extra", 285, 310, 200, 150 ) then
 				local lbot_backtrack = (gui.GetValue("lbot_positionadjustment") * 995);
@@ -4209,3 +4229,29 @@ function draw_callback()
 end
 
 callbacks.Register( "Draw", "suitest", draw_callback );--- SenseUI Menu by uglych discord is Uglych#1515
+
+local function OnFrameWarning()
+	if math.floor(common.Time()) % 2 > 0 then
+		draw.Color(0, 0, 255, 255)
+	else
+		draw.Color(255, 0, 0, 255)
+	end
+	draw.SetFont(font_warning)
+	draw.Text(0, 0, "[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
+end
+
+
+if gui.GetValue("lua_allow_http") and gui.GetValue("lua_allow_cfg") then
+	git_update()
+	
+	callbacks.Register("Draw", OnFrameMain)
+	callbacks.Register("CreateMove", OnCreateMoveMain)
+	callbacks.Register("FireGameEvent", OnEventMain)
+	
+	client.AllowListener("round_prestart")
+else
+	print("[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
+	callbacks.Register("Draw", OnFrameWarning)
+end
+
+
