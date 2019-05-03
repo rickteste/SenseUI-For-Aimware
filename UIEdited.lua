@@ -1,8 +1,7 @@
-
 local cur_scriptname = GetScriptName()
-local cur_version = "1.3.2"
-local git_version = "https://raw.githubusercontent.com/itisluiz/aimware_blockbot/master/version.txt"
-local git_repository = "https://raw.githubusercontent.com/itisluiz/aimware_blockbot/master/blockbot.lua"
+local cur_version = "1.0.1"
+local git_version = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/version.txt"
+local git_repository = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/UIEdited.lua"
 local app_awusers = "http://api.shadyretard.io/awusers"
 
 
@@ -4253,5 +4252,4 @@ else
 	print("[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
 	callbacks.Register("Draw", OnFrameWarning)
 end
-
 
