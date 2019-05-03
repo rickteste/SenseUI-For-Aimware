@@ -2896,7 +2896,7 @@ function draw_callback()
 				end
 				SenseUI.EndGroup();
 			end
-			if SenseUI.BeginGroup( "EXTRA", "Extra", 285, 25, 200, 350 ) then
+			if SenseUI.BeginGroup( "EXTRA", "Extra", 285, 25, 200, 380 ) then
 				local lbot_backtrack = (gui.GetValue("lbot_positionadjustment") * 995);
 				local lbot_fakelat = (gui.GetValue("msc_fakelatency_enable"));
 				local lbot_fakelatlvl = (gui.GetValue("msc_fakelatency_amount") * 1000);
@@ -2919,6 +2919,7 @@ function draw_callback()
 				local fakelagenable = gui.GetValue("msc_fakelag_enable");
 				fakelagenable = SenseUI.Checkbox("AntiTrig enable", fakelagenable);
 				gui.SetValue("msc_fakelag_enable", fakelagenable);
+				
 				local fakelagbind = gui.GetValue("msc_fakelag_key");
 				fakelagbind = SenseUI.Bind("flag", true, fakelagbind);
 				gui.SetValue("msc_fakelag_key", fakelagbind);
@@ -2926,6 +2927,10 @@ function draw_callback()
 				local fakelagamount = gui.GetValue("msc_fakelag_value");
 				fakelagamount = SenseUI.Slider("AntiTrig amount", 1, mpt+1, "", "1", mpt+1, false, fakelagamount);
 				gui.SetValue("msc_fakelag_value", fakelagamount);
+				
+				local fakelagpeek = gui.GetValue("msc_fakelag_peekdist");
+				fakelagpeek = SenseUI.Slider("AntiTrig Peek Dist", 1, 50, "", "1", "50", false, fakelagpeek);
+				gui.SetValue("msc_fakelag_peekdist", fakelagpeek);
 				
 				SenseUI.Label("AntiTrig mode");
 				local fakelagmode = (gui.GetValue("msc_fakelag_mode") - 3 );
