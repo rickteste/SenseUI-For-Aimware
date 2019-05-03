@@ -25,6 +25,467 @@ end
 ]]
 
 -- Anti multiload
+
+
+--
+--
+-- Start SmartFakeLag.lua
+--
+--
+
+local SetValue = gui.SetValue;
+local GetValue = gui.GetValue;
+ 
+local Version = "4.5"
+ 
+local MSC_FAKELAG_REF = gui.Reference( "MISC", "ENHANCEMENT", "Fakelag" );
+ 
+local FAKELAG_EXTRA_TEXT = gui.Text( MSC_FAKELAG_REF, "Fakelag Extra" );
+local FAKELAG_EXTRA = gui.Checkbox( MSC_FAKELAG_REF, "lua_fakelag_extra_enable", "Enable", 0 );
+local FAKELAG_ON_SLOWWALK = gui.Checkbox( MSC_FAKELAG_REF, "lua_fakelag_slowwalk", "Disable On Slow Walk", 0 );
+local FAKELAG_ON_KNIFE = gui.Checkbox( MSC_FAKELAG_REF, "lua_fakelag_knife", "Disable On Knife", 0 );
+local FAKELAG_ON_TASER = gui.Checkbox( MSC_FAKELAG_REF, "lua_fakelag_taser", "Disable On Taser", 0 );
+local FAKELAG_ON_GRENADE = gui.Checkbox( MSC_FAKELAG_REF, "lua_fakelag_grenade", "Disable On Grenade", 0 );
+local FAKELAG_ON_PISTOL = gui.Checkbox( MSC_FAKELAG_REF, "lua_fakelag_pistol", "Disable On Pistol", 0 );
+local FAKELAG_ON_REVOLVER = gui.Checkbox( MSC_FAKELAG_REF, "lua_fakelag_revolver", "Disable On Revolver", 0 );
+local FAKELAG_ON_PING = gui.Checkbox( MSC_FAKELAG_REF, "lua_fakelag_ping", "Disable Fakelag On Ping", 0 )
+local FAKELAG_ON_PING_AMOUNT = gui.Slider( MSC_FAKELAG_REF, "lua_fakelag_ping_amount", "Amount", 120, 0, 1000 )
+ 
+local FAKELAG_SMART_MODE_TEXT = gui.Text( MSC_FAKELAG_REF, "Fakelag Smart Mode" )
+local FAKELAG_SMART_MODE = gui.Checkbox( MSC_FAKELAG_REF, "lua_fakelag_smartmode_enable", "Enable", 0 );
+local FAKELAG_SMART_MODE_STANDING = gui.Combobox( MSC_FAKELAG_REF, "lua_fakelag_standing", "While Standing", "Off", "Factor", "Switch", "Adaptive", "Random", "Peek", "Rapid Peek" );
+local FAKELAG_SMART_MODE_STANDING_FACTOR = gui.Slider( MSC_FAKELAG_REF, "lua_fakelag_standing_factor", "Factor", 15, 1, 15 );
+local FAKELAG_SMART_MODE_MOVING = gui.Combobox( MSC_FAKELAG_REF, "lua_fakelag_moving", "While Moving", "Off", "Factor", "Switch", "Adaptive", "Random", "Peek", "Rapid Peek" );
+local FAKELAG_SMART_MODE_MOVING_FACTOR = gui.Slider( MSC_FAKELAG_REF, "lua_fakelag_moving_factor", "Factor", 15, 1, 15 );
+local FAKELAG_SMART_MODE_INAIR = gui.Combobox( MSC_FAKELAG_REF, "lua_fakelag_inair", "While In Air", "Off", "Factor", "Switch", "Adaptive", "Random", "Peek", "Rapid Peek" );
+local FAKELAG_SMART_MODE_INAIR_FACTOR = gui.Slider( MSC_FAKELAG_REF, "lua_fakelag_inair_factor", "Factor", 15, 1, 15 );
+ 
+local Ping = 0
+local Time = 0
+ 
+local function GetWeapon()
+ 
+    if entities.GetLocalPlayer() == nil then
+        return
+    end
+ 
+    local LocalPlayerEntity = entities.GetLocalPlayer();
+    local WeaponID = LocalPlayerEntity:GetWeaponID();
+    local WeaponType = LocalPlayerEntity:GetWeaponType();
+ 
+    if ( WeaponType == 0 and WeaponID ~= 31 ) then Knife = true else Knife = false end
+    if ( WeaponType == 1 and WeaponID ~= 64 ) then Pistol = true else Pistol = false end
+    if WeaponID == 31 then Taser = true else Taser = false end
+    if WeaponType == 9 then Grenade = true else Grenade = false end
+    if WeaponID == 64 then Revolver = true else Revolver = false end
+ 
+end
+ 
+local function FakelagExtra()
+ 
+    if FAKELAG_EXTRA:GetValue() then
+       
+        if ( FAKELAG_ON_KNIFE:GetValue() and Knife ) or -- On Knife
+           ( FAKELAG_ON_TASER:GetValue() and Taser ) or -- On Taser
+           ( FAKELAG_ON_GRENADE:GetValue() and Grenade ) or -- On Grenade
+           ( FAKELAG_ON_PISTOL:GetValue() and Pistol ) or -- On Pistol
+           ( FAKELAG_ON_REVOLVER:GetValue() and Revolver ) then -- On Revolver
+            SetValue( "msc_fakelag_enable", 0 );
+        else
+            SetValue( "msc_fakelag_enable", 1 );
+        end
+ 
+    end
+ 
+end
+ 
+local function FakelagOnPing()
+ 
+    if FAKELAG_EXTRA:GetValue() then
+        if FAKELAG_ON_PING:GetValue() then
+ 
+            if entities.GetPlayerResources() ~= nil then
+                Ping = entities.GetPlayerResources():GetPropInt( "m_iPing", client.GetLocalPlayerIndex() );
+            end
+            FakelagOnPingAmount = math.floor( FAKELAG_ON_PING_AMOUNT:GetValue() )
+ 
+            if ( Ping >= FakelagOnPingAmount ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_KNIFE:GetValue() and Knife ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_TASER:GetValue() and Taser ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_GRENADE:GetValue() and Grenade ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_PISTOL:GetValue() and Pistol ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_REVOLVER:GetValue() and Revolver ) then
+                SetValue( "msc_fakelag_enable", 0 );
+            else
+                SetValue( "msc_fakelag_enable", 1 );
+            end
+ 
+        end
+    end
+ 
+end        
+ 
+local function FakelagOnSlowWalk()
+ 
+    if FAKELAG_EXTRA:GetValue() then
+ 
+        if GetValue( "msc_slowwalk" ) ~= 0 then
+            SlowWalkFakelagOff = input.IsButtonDown( GetValue( "msc_slowwalk" ) )
+        end
+ 
+        if FAKELAG_ON_SLOWWALK:GetValue() and GetValue( "msc_slowwalk" ) ~= 0 then
+            if ( SlowWalkFakelagOff ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_KNIFE:GetValue() and Knife ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_TASER:GetValue() and Taser ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_GRENADE:GetValue() and Grenade ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_PISTOL:GetValue() and Pistol ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_REVOLVER:GetValue() and Revolver ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_PING:GetValue() and Ping >= FakelagOnPingAmount ) then
+                SetValue( "msc_fakelag_enable", 0 );
+            else
+                SetValue( "msc_fakelag_enable", 1 );
+            end
+        end
+ 
+    end
+ 
+end
+ 
+local function FakelagSmartMode()
+ 
+    if FAKELAG_SMART_MODE:GetValue() then
+ 
+        local FAKELAG_STANDING = FAKELAG_SMART_MODE_STANDING:GetValue();
+        local FAKELAG_MOVING = FAKELAG_SMART_MODE_MOVING:GetValue();
+        local FAKELAG_INAIR = FAKELAG_SMART_MODE_INAIR:GetValue();
+ 
+        local FAKELAG_STANDING_FACTOR = math.floor( FAKELAG_SMART_MODE_STANDING_FACTOR:GetValue() )
+        local FAKELAG_MOVING_FACTOR = math.floor( FAKELAG_SMART_MODE_MOVING_FACTOR:GetValue() )
+        local FAKELAG_INAIR_FACTOR = math.floor( FAKELAG_SMART_MODE_INAIR_FACTOR:GetValue() )
+ 
+        if entities.GetLocalPlayer() ~= nil then
+ 
+            local LocalPlayerEntity = entities.GetLocalPlayer();
+            local fFlags = LocalPlayerEntity:GetProp( "m_fFlags" );
+ 
+            local VelocityX = LocalPlayerEntity:GetPropFloat( "localdata", "m_vecVelocity[0]" );
+            local VelocityY = LocalPlayerEntity:GetPropFloat( "localdata", "m_vecVelocity[1]" );
+ 
+            local Velocity = math.sqrt( VelocityX^2 + VelocityY^2 );
+ 
+            -- Standing
+            if ( Velocity == 0 and ( fFlags == 257 or fFlags == 261 or fFlags == 263 ) ) then
+                Standing = true
+            else
+                Standing = false
+            end
+ 
+            -- Moving
+            if ( Velocity > 0 and ( fFlags == 257 or fFlags == 261 or fFlags == 263 ) ) then
+                Moving = true
+            else
+                Moving = false
+            end
+ 
+            -- In Air
+            if fFlags == 256 or fFlags == 262 then
+                InAir = true
+                Time = globals.CurTime();
+            else
+                InAir = false
+            end
+        end
+ 
+        if Standing and Time + 0.2 < globals.CurTime() then
+            if ( FAKELAG_STANDING == 0 ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_KNIFE:GetValue() and Knife ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_TASER:GetValue() and Taser ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_GRENADE:GetValue() and Grenade ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_PISTOL:GetValue() and Pistol ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_REVOLVER:GetValue() and Revolver ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_PING:GetValue() and Ping >= FakelagOnPingAmount ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_SLOWWALK:GetValue() and GetValue( "msc_slowwalk" ) ~= 0 and SlowWalkFakelagOff ) then
+                SetValue( "msc_fakelag_enable", 0 );
+            else
+                SetValue( "msc_fakelag_enable", 1 );
+            end
+            if FAKELAG_STANDING > 0 then
+                STANDING_MODE = ( FAKELAG_STANDING - 1 )
+            end
+            SetValue( "msc_fakelag_mode", STANDING_MODE );
+            SetValue( "msc_fakelag_value", FAKELAG_STANDING_FACTOR );
+        end
+ 
+        if Moving and Time + 0.2 < globals.CurTime() then
+            if ( FAKELAG_MOVING == 0 ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_KNIFE:GetValue() and Knife ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_TASER:GetValue() and Taser ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_GRENADE:GetValue() and Grenade ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_PISTOL:GetValue() and Pistol ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_REVOLVER:GetValue() and Revolver ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_PING:GetValue() and Ping >= FakelagOnPingAmount ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_SLOWWALK:GetValue() and GetValue( "msc_slowwalk" ) ~= 0 and SlowWalkFakelagOff ) then
+                SetValue( "msc_fakelag_enable", 0 );
+            else
+                SetValue( "msc_fakelag_enable", 1 );
+            end
+            if FAKELAG_MOVING > 0 then
+                MOVING_MODE = ( FAKELAG_MOVING - 1 )
+            end
+            SetValue( "msc_fakelag_mode", MOVING_MODE );
+            SetValue( "msc_fakelag_value", FAKELAG_MOVING_FACTOR );
+        end
+ 
+        if InAir then
+            if ( FAKELAG_INAIR == 0 ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_KNIFE:GetValue() and Knife ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_TASER:GetValue() and Taser ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_GRENADE:GetValue() and Grenade ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_PISTOL:GetValue() and Pistol ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_REVOLVER:GetValue() and Revolver ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_PING:GetValue() and Ping >= FakelagOnPingAmount ) or
+               ( FAKELAG_EXTRA:GetValue() and FAKELAG_ON_SLOWWALK:GetValue() and GetValue( "msc_slowwalk" ) ~= 0 and SlowWalkFakelagOff ) then
+                SetValue( "msc_fakelag_enable", 0 );
+            else
+                SetValue( "msc_fakelag_enable", 1 );
+            end
+            if FAKELAG_INAIR > 0 then
+                INAIR_MODE = ( FAKELAG_INAIR - 1 )
+            end
+            SetValue( "msc_fakelag_mode", INAIR_MODE );
+            SetValue( "msc_fakelag_value", FAKELAG_INAIR_FACTOR );
+        end
+ 
+    end
+ 
+end
+ 
+callbacks.Register( "Draw", GetWeapon )
+callbacks.Register( "Draw", FakelagExtra )
+callbacks.Register( "Draw", FakelagOnPing )
+callbacks.Register( "Draw", FakelagOnSlowWalk )
+callbacks.Register( "Draw", FakelagSmartMode )
+ 
+-- Updater
+callbacks.Register( "Draw", Updater )
+--
+--
+-- End SmartFakeLag.lua
+--
+--
+
+
+
+
+--
+--
+--
+-- Begin Blockbot.lua
+--
+--
+local font_icon = draw.CreateFont("Webdings", 30, 30)
+local font_warning = draw.CreateFont("Verdana", 15, 15)
+
+
+
+-- UI Elements --
+local ref_msc_auto_other = gui.Reference("MISC", "AUTOMATION", "Other")
+
+local txt_header = gui.Text( ref_msc_auto_other, "Block Bot")
+local key_blockbot = gui.Keybox(ref_msc_auto_other, "msc_blockbot", "On Key", 0)
+local cob_blockbot_mode = gui.Combobox(ref_msc_auto_other, "msc_blockbot_mode", "Mode", "Match Speed", "Maximum Speed")
+local chb_blockbot_retreat = gui.Checkbox(ref_msc_auto_other, "chb_blockbot_retreat", " Retreat on BunnyHop", 0)
+-----------------
+
+
+-- Shared Variables
+local Target = nil
+local CrouchBlock = false
+local LocalPlayer = nil
+
+local awusers = {}
+
+local function OnFrameMain()
+
+	LocalPlayer = entities.GetLocalPlayer()
+	
+	if not gui.GetValue("lua_allow_http") then
+		return
+	end
+	
+	if LocalPlayer == nil or engine.GetServerIP() == nil then
+		return
+	end
+	
+	if (key_blockbot:GetValue() == nil or key_blockbot:GetValue() == 0) or not LocalPlayer:IsAlive() then
+		return
+	end
+	
+	if input.IsButtonDown(key_blockbot:GetValue()) and Target == nil then
+		
+		for Index, Entity in pairs(entities.FindByClass("CCSPlayer")) do
+			if Entity:GetIndex() ~= LocalPlayer:GetIndex() and Entity:IsAlive() then
+				local EntityID = client.GetPlayerInfo(Entity:GetIndex())["SteamID"]
+				local isPleb = true
+				
+				for Index, SteamID in pairs(awusers) do	
+					if SteamID == EntityID then
+						isPleb = false
+						break		
+					end
+				end
+				
+				if isPleb then
+					if Target == nil then
+						Target = Entity;
+					elseif vector.Distance({LocalPlayer:GetAbsOrigin()}, {Target:GetAbsOrigin()}) > vector.Distance({LocalPlayer:GetAbsOrigin()}, {Entity:GetAbsOrigin()}) then
+						Target = Entity;
+					end
+				end
+				
+			end
+		end
+		
+	elseif not input.IsButtonDown(key_blockbot:GetValue()) or not Target:IsAlive() then
+		Target = nil
+	end
+
+	if Target ~= nil then
+		local NearPlayer_toScreen = {client.WorldToScreen(Target:GetBonePosition(5))}
+		
+		if select(3, Target:GetHitboxPosition(0)) < select(3, LocalPlayer:GetAbsOrigin()) and vector.Distance({LocalPlayer:GetAbsOrigin()}, {Target:GetAbsOrigin()}) < 100 then
+			CrouchBlock = true
+			draw.Color(255, 255, 0, 255)
+		else
+			CrouchBlock = false
+			draw.Color(255, 0, 0, 255)
+		end
+		
+		draw.SetFont(font_icon)
+		
+		if NearPlayer_toScreen[1] ~= nil and NearPlayer_toScreen[2] ~= nil then
+			draw.TextShadow(NearPlayer_toScreen[1] - select(1, draw.GetTextSize("x")) / 2, NearPlayer_toScreen[2], "x")
+		end
+		
+	end
+	
+end
+
+local function OnCreateMoveMain(UserCmd)
+	
+	if Target ~= nil then
+		local LocalAngles = {UserCmd:GetViewAngles()}
+		local VecForward = {vector.Subtract( {Target:GetAbsOrigin()},  {LocalPlayer:GetAbsOrigin()} )}
+		local AimAngles = {vector.Angles( VecForward )}
+		local TargetSpeed = vector.Length(Target:GetPropFloat("localdata", "m_vecVelocity[0]"), Target:GetPropFloat("localdata", "m_vecVelocity[1]"), Target:GetPropFloat("localdata", "m_vecVelocity[2]"))
+		
+		if CrouchBlock then
+			if cob_blockbot_mode:GetValue() == 0 then
+				UserCmd:SetForwardMove( ( (math.sin(math.rad(LocalAngles[2]) ) * VecForward[2]) + (math.cos(math.rad(LocalAngles[2]) ) * VecForward[1]) ) * 10 )
+				UserCmd:SetSideMove( ( (math.cos(math.rad(LocalAngles[2]) ) * -VecForward[2]) + (math.sin(math.rad(LocalAngles[2]) ) * VecForward[1]) ) * 10 )
+			elseif cob_blockbot_mode:GetValue() == 1 then
+				UserCmd:SetForwardMove( ( (math.sin(math.rad(LocalAngles[2]) ) * VecForward[2]) + (math.cos(math.rad(LocalAngles[2]) ) * VecForward[1]) ) * 200 )
+				UserCmd:SetSideMove( ( (math.cos(math.rad(LocalAngles[2]) ) * -VecForward[2]) + (math.sin(math.rad(LocalAngles[2]) ) * VecForward[1]) ) * 200 )
+			end
+		else
+			local DiffYaw = AimAngles[2] - LocalAngles[2]
+
+			if DiffYaw > 180 then
+				DiffYaw = DiffYaw - 360
+			elseif DiffYaw < -180 then
+				DiffYaw = DiffYaw + 360
+			end
+			
+			if TargetSpeed > 285 and chb_blockbot_retreat:GetValue() then
+				UserCmd:SetForwardMove(-math.abs(TargetSpeed))
+			end
+			
+			if cob_blockbot_mode:GetValue() == 0 then
+				if math.abs(DiffYaw) > 0.75 then
+					UserCmd:SetSideMove(450 * -DiffYaw)
+				end
+			elseif cob_blockbot_mode:GetValue() == 1 then
+				if DiffYaw > 0.25 then
+					UserCmd:SetSideMove(-450)
+				elseif DiffYaw < -0.25 then
+					UserCmd:SetSideMove(450)
+				end
+			end
+			
+		end
+		
+	end
+	
+end
+
+function handleGet(content)
+	if (content == nil) then
+		return
+    end
+	
+	awusers = {}
+	for stringindex in content:gmatch("([^\t]*)") do
+		table.insert(awusers, stringindex)
+	end
+end
+
+local char_to_hex = function(c)
+    return string.format("%%%02X", string.byte(c))
+end
+
+function urlencode(url) -- Straight up stolen from ShadyRetard, thanks for all the help.
+    if url == nil then
+        return
+    end
+    url = url:gsub("\n", "\r\n")
+    url = url:gsub("([^%w ])", char_to_hex)
+    url = url:gsub(" ", "+")
+    return url
+end
+
+-- Had to add this because everyone is retarded
+local function OnFrameWarning()
+	if math.floor(common.Time()) % 2 > 0 then
+		draw.Color(255, 255, 255, 255)
+	else
+		draw.Color(255, 0, 0, 255)
+	end
+	draw.SetFont(font_warning)
+	draw.Text(0, 0, "[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
+end
+
+local function OnEventMain(GameEvent)
+	
+	if client.GetLocalPlayerIndex() == nil then
+		return
+	end
+	
+	local LocalSteamID = client.GetPlayerInfo(client.GetLocalPlayerIndex())["SteamID"]
+	
+	if GameEvent:GetName() == "round_prestart" then
+		http.Get(app_awusers .. "?steamid=" .. urlencode(LocalSteamID), handleGet)
+	end
+
+end
+
+if gui.GetValue("lua_allow_http") and gui.GetValue("lua_allow_cfg") then
+	
+	callbacks.Register("Draw", OnFrameMain)
+	callbacks.Register("CreateMove", OnCreateMoveMain)
+	callbacks.Register("FireGameEvent", OnEventMain)
+	
+	client.AllowListener("round_prestart")
+else
+	print("[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
+	callbacks.Register("Draw", OnFrameWarning)
+end
+
+--
+--
+-- End Blockbot.lua
+--
+--
+
 if SenseUI ~= nil then
 	return
 end
@@ -2166,6 +2627,16 @@ local condition_aa = {
 	["On ladder"] = gui.GetValue("rbot_antiaim_ladder")
 }
 
+local antitrig = {
+	["SlowWalk"] = gui.GetValue("lua_fakelag_slowwalk"),
+	["Knife"] = gui.GetValue("lua_fakelag_slowwalk"),
+	["Taser"] = gui.GetValue("lua_fakelag_slowwalk"),
+	["Grenade"] = gui.GetValue("lua_fakelag_slowwalk"),
+	["Pistol"] = gui.GetValue("lua_fakelag_slowwalk"),
+	["Revolver"] = gui.GetValue("lua_fakelag_slowwalk"),
+	["Ping"] = gui.GetValue("lua_fakelag_slowwalk"),
+}
+
 SenseUI.EnableLogs = false;
 
 function draw_callback()
@@ -2180,81 +2651,9 @@ function draw_callback()
 		SenseUI.SetWindowOpenKey( window_bkey );
 
 		if SenseUI.BeginTab( "aimbot", SenseUI.Icons.rage ) then
-			if SenseUI.BeginGroup( "mainaim", "Aimbot", 25, 25, 235, 275 ) then
-				local switch_enabled = gui.GetValue("rbot_active");
-				switch_enabled = SenseUI.Checkbox( "Enabled", switch_enabled );
-				if switch_enabled then
-					gui.SetValue("rbot_active", 1);
-					gui.SetValue("rbot_enable", 1);
-					else
-					gui.SetValue("rbot_enable", 0);
-					gui.SetValue("rbot_active", 0);
-				end
-				local fov_rr = gui.GetValue("rbot_fov");
-				fov_rr = SenseUI.Slider("FOV range", 0, 180, "°", "0°", "180°", false, fov_rr);
-				gui.SetValue("rbot_fov", fov_rr);
-				local s_limit = (gui.GetValue("rbot_speedlimit") + 1);
-				SenseUI.Label("Speed limit");
-				s_limit = SenseUI.Combo("Speed limit", { "Off", "On", "Auto" }, s_limit);
-				gui.SetValue("rbot_speedlimit", s_limit-1);
-				SenseUI.Label("Silent aim");
-				local sa_rage = (gui.GetValue("rbot_silentaim") + 1);
-				sa_rage = SenseUI.Combo("Sa_rage", { "Off", "Client-side", "Server-side" }, sa_rage);
-				gui.SetValue("rbot_silentaim", sa_rage-1);
-				local ff_rage = gui.GetValue("rbot_team");
-				ff_rage = SenseUI.Checkbox("Friendly fire", ff_rage);
-				gui.SetValue("rbot_team", ff_rage);
-				local aimlock = gui.GetValue("rbot_aimlock");
-				aimlock = SenseUI.Checkbox("Aim lock", aimlock);
-				gui.SetValue("rbot_aimlock", aimlock);
-				SenseUI.Label("Position adjustment");
-				local pa_rage = (gui.GetValue("rbot_positionadjustment") + 1);
-				pa_rage = SenseUI.Combo("PA_rage", { "Off", "Low", "Medium", "High", "Very high", "Adaptive", "Last record" }, pa_rage);
-				gui.SetValue("rbot_positionadjustment", pa_rage-1);
-				local override_resolver = gui.GetValue("rbot_resolver_override");
-				local resolver = gui.GetValue("rbot_resolver");
-				resolver = SenseUI.Checkbox("Resolver", resolver);
-				gui.SetValue("rbot_resolver", resolver);
-				override_resolver = SenseUI.Bind("rrresolv", true, override_resolver);
-				gui.SetValue("rbot_resolver_override", override_resolver);
-				local taser_hc = gui.GetValue("rbot_taser_hitchance");
-				taser_hc = SenseUI.Slider("Taser hit chance", 0, 100, "%", "0%", "100%", false, taser_hc);
-				gui.SetValue("rbot_taser_hitchance", taser_hc);
-				SenseUI.EndGroup();
-			end
-			if SenseUI.BeginGroup( "otheraim", "Other", 285, 25, 235, 210 ) then
-				local autorevolver = gui.GetValue("rbot_revolver_autocock");
-				local autoawpbody = gui.GetValue("rbot_sniper_autoawp");
-				local autopistol = gui.GetValue("rbot_pistol_autopistol");
-				local autoscope = (gui.GetValue("rbot_autosniper_autoscope") + 1);
-				local nospread = gui.GetValue("rbot_antispread");
-				nospread = SenseUI.Checkbox("Remove spread", nospread, true);
-				gui.SetValue("rbot_antispread", nospread);
-				local norecoil = gui.GetValue("rbot_antirecoil");
-				norecoil = SenseUI.Checkbox("Remove recoil", norecoil);
-				gui.SetValue("rbot_antirecoil", norecoil);
-				SenseUI.Label("Accuracy boost");	
-				local delayshot = (gui.GetValue("rbot_delayshot") + 1);				
-				delayshot = SenseUI.Combo("DS_rage", { "Off", "Accurate unlag", "Accurate history" }, delayshot);
-				gui.SetValue("rbot_delayshot", delayshot-1);
-				SenseUI.Label("Double tap", true);
-				local doubletap = gui.GetValue("rbot_chargerapidfire");
-				doubletap = SenseUI.Bind("doubletapss", true, doubletap);
-				gui.SetValue("rbot_chargerapidfire", doubletap);
-				SenseUI.Label("Auto scope");
-				autoscope = SenseUI.Combo("az_rage", { "Off", "On - auto unzoom", "On - no unzoom" }, autoscope);
-				gui.SetValue("rbot_autosniper_autoscope", autoscope-1);
-				gui.SetValue("rbot_sniper_autoscope", autoscope-1);
-				gui.SetValue("rbot_scout_autoscope", autoscope-1);
-				autorevolver = SenseUI.Checkbox("Auto revolver", autorevolver);
-				gui.SetValue("rbot_revolver_autocock", autorevolver);
-				autoawpbody = SenseUI.Checkbox("AWP body", autoawpbody);
-				gui.SetValue("rbot_sniper_autoawp", autoawpbody);
-				autopistol = SenseUI.Checkbox("Auto pistol", autopistol);
-				gui.SetValue("rbot_pistol_autopistol", autopistol);
-				SenseUI.EndGroup();
-			end
-			if SenseUI.BeginGroup( "legitaim", "Legit Aimbot", 25, 310, 235, 205 ) then
+
+
+			if SenseUI.BeginGroup( "legitaim", "Legit Aimbot", 25, 25, 235, 205 ) then
 				SenseUI.SetGroupMoveable( true );
 				SenseUI.SetGroupSizeable( true );
 				lselect = SenseUI.Combo("", { "Pistol", "SMG", "Rifle", "Shotgun", "Sniper" }, lselect );
@@ -2497,7 +2896,7 @@ function draw_callback()
 				end
 				SenseUI.EndGroup();
 			end
-			if SenseUI.BeginGroup( "EXTRA", "Extra", 285, 310, 200, 150 ) then
+			if SenseUI.BeginGroup( "EXTRA", "Extra", 285, 25, 200, 350 ) then
 				local lbot_backtrack = (gui.GetValue("lbot_positionadjustment") * 995);
 				local lbot_fakelat = (gui.GetValue("msc_fakelatency_enable"));
 				local lbot_fakelatlvl = (gui.GetValue("msc_fakelatency_amount") * 1000);
@@ -2505,6 +2904,9 @@ function draw_callback()
 				
 				lbot_fakelat = SenseUI.Checkbox("Increased Backtrack", lbot_fakelat)
 				gui.SetValue("msc_fakelatency_enable", lbot_fakelat)
+				local fakelatkey = gui.GetValue("msc_fakelatency_key");
+				fakelatkey = SenseUI.Bind("flk", true, fakelatkey);
+				gui.SetValue("msc_fakelatency_key", fakelatkey);
 				
 				lbot_fakelatlvl = SenseUI.Slider("Increase Backtrack", 0.00, 1000.00, "ms", "Off", "Muy Backtrack", true, lbot_fakelatlvl)
 				gui.SetValue("msc_fakelatency_amount", lbot_fakelatlvl / 1000);
@@ -2512,7 +2914,58 @@ function draw_callback()
 				
 				lbot_backtrack = SenseUI.Slider("Backtrack", 0.00, 200.00, "ms", "Off", "Muy Backtrack", true, lbot_backtrack)
 				gui.SetValue("lbot_positionadjustment", lbot_backtrack / 995)
+				
+
+				local fakelagenable = gui.GetValue("msc_fakelag_enable");
+				fakelagenable = SenseUI.Checkbox("AntiTrig enable", fakelagenable);
+				gui.SetValue("msc_fakelag_enable", fakelagenable);
+				local fakelagbind = gui.GetValue("msc_fakelag_key");
+				fakelagbind = SenseUI.Bind("flag", true, fakelagbind);
+				gui.SetValue("msc_fakelag_key", fakelagbind);
+				
+				local fakelagamount = gui.GetValue("msc_fakelag_value");
+				fakelagamount = SenseUI.Slider("AntiTrig amount", 1, mpt+1, "", "1", mpt+1, false, fakelagamount);
+				gui.SetValue("msc_fakelag_value", fakelagamount);
+				
+				SenseUI.Label("AntiTrig mode");
+				local fakelagmode = (gui.GetValue("msc_fakelag_mode") - 3 );
+				fakelagmode = SenseUI.Combo("trig", {"Peek", "Rapid Peek" }, fakelagmode);
+				gui.SetValue("msc_fakelag_mode", fakelagmode + 3);
+				
+				local fakelagewsh = gui.GetValue("msc_fakelag_attack");
+				fakelagewsh = SenseUI.Checkbox("AntiTrig while shooting", fakelagewsh);
+				gui.SetValue("msc_fakelag_attack", fakelagewsh);
+				
+				local fakelagwst = gui.GetValue("msc_fakelag_standing");
+				fakelagwst = SenseUI.Checkbox("AntiTrig while standing", fakelagwst);
+				gui.SetValue("msc_fakelag_standing", fakelagwst);
+				
+				local fakelagwund = gui.GetValue("msc_fakelag_unducking");
+				fakelagwund = SenseUI.Checkbox("AntiTrig while unducking", fakelagwund);
+				gui.SetValue("msc_fakelag_unducking", fakelagwund);
+				
+				SenseUI.Label("AntiTrig style");
+				local fakelagstylell = (gui.GetValue("msc_fakelag_style") + 1 );
+				
+				fakelagstylell = SenseUI.Combo("ssd", { "Always", "Avoid ground", "Hit ground" }, fakelagstylell);
+				gui.SetValue("msc_fakelag_style", fakelagstylell-1);
+				mpt = SenseUI.Slider("Max server process ticks", 1, 61, "", "1", "61" , false, mpt);
+				gui.SetValue("msc_fakelag_limit", mpt);
+				
+				local extraantitrig = (gui.GetValue("lua_fakelag_extra_enable"));
+				extraantitrig = SenseUI.Checkbox("Smart Antitrig(WIP)", extraantitrig);
+				gui.SetValue("lua_fakelag_extra_enable", extraantitrig);
+				
+				antitrig = SenseUI.MultiCombo("Smart Antitrig settings", { "SlowWalk", "Knife", "Taser", "Grenade", "Pistol", "Revolver", "Ping" }, antitrig);
+				gui.SetValue("lua_fakelag_slowwalk", antitrig["SlowWalk"]);
+				gui.SetValue("lua_fakelag_knife", antitrig["Knife"]);
+				gui.SetValue("lua_fakelag_taser", antitrig["Taser"]);
+				gui.SetValue("lua_fakelag_grenade", antitrig["Grenade"]);
+				gui.SetValue("lua_fakelag_pistol", antitrig["Pistol"]);
+				gui.SetValue("lua_fakelag_revolver", antitrig["Revolver"]);
+				gui.SetValue("lua_fakelag_ping", antitrig["Ping"]);
 				SenseUI.EndGroup();
+
 			end
 		end
 		SenseUI.EndTab();
@@ -3115,6 +3568,48 @@ function draw_callback()
 					end
 				end
 			SenseUI.EndGroup();
+			end
+			if SenseUI.BeginGroup( "mainaim", "Rage Aimbot", 285, 350, 235, 275 ) then
+				local switch_enabled = gui.GetValue("rbot_active");
+				switch_enabled = SenseUI.Checkbox( "Enabled", switch_enabled );
+				if switch_enabled then
+					gui.SetValue("rbot_active", 1);
+					gui.SetValue("rbot_enable", 1);
+					else
+					gui.SetValue("rbot_enable", 0);
+					gui.SetValue("rbot_active", 0);
+				end
+				local fov_rr = gui.GetValue("rbot_fov");
+				fov_rr = SenseUI.Slider("FOV range", 0, 180, "°", "0°", "180°", false, fov_rr);
+				gui.SetValue("rbot_fov", fov_rr);
+				local s_limit = (gui.GetValue("rbot_speedlimit") + 1);
+				SenseUI.Label("Speed limit");
+				s_limit = SenseUI.Combo("Speed limit", { "Off", "On", "Auto" }, s_limit);
+				gui.SetValue("rbot_speedlimit", s_limit-1);
+				SenseUI.Label("Silent aim");
+				local sa_rage = (gui.GetValue("rbot_silentaim") + 1);
+				sa_rage = SenseUI.Combo("Sa_rage", { "Off", "Client-side", "Server-side" }, sa_rage);
+				gui.SetValue("rbot_silentaim", sa_rage-1);
+				local ff_rage = gui.GetValue("rbot_team");
+				ff_rage = SenseUI.Checkbox("Friendly fire", ff_rage);
+				gui.SetValue("rbot_team", ff_rage);
+				local aimlock = gui.GetValue("rbot_aimlock");
+				aimlock = SenseUI.Checkbox("Aim lock", aimlock);
+				gui.SetValue("rbot_aimlock", aimlock);
+				SenseUI.Label("Position adjustment");
+				local pa_rage = (gui.GetValue("rbot_positionadjustment") + 1);
+				pa_rage = SenseUI.Combo("PA_rage", { "Off", "Low", "Medium", "High", "Very high", "Adaptive", "Last record" }, pa_rage);
+				gui.SetValue("rbot_positionadjustment", pa_rage-1);
+				local override_resolver = gui.GetValue("rbot_resolver_override");
+				local resolver = gui.GetValue("rbot_resolver");
+				resolver = SenseUI.Checkbox("Resolver", resolver);
+				gui.SetValue("rbot_resolver", resolver);
+				override_resolver = SenseUI.Bind("rrresolv", true, override_resolver);
+				gui.SetValue("rbot_resolver_override", override_resolver);
+				local taser_hc = gui.GetValue("rbot_taser_hitchance");
+				taser_hc = SenseUI.Slider("Taser hit chance", 0, 100, "%", "0%", "100%", false, taser_hc);
+				gui.SetValue("rbot_taser_hitchance", taser_hc);
+				SenseUI.EndGroup();
 			end
 			if SenseUI.BeginGroup( "hitscans", "Hitscan", 285, 25, 235, 300 ) then
 				if weapon_select == 1 then
@@ -3976,44 +4471,50 @@ function draw_callback()
 				remove_pressed = SenseUI.Button("Remove config", 155, 25)
 			end
 			SenseUI.EndGroup();
-			if SenseUI.BeginGroup( "misc2", "Other", 285, 25, 235, 275 ) then
-				local fakelat = gui.GetValue("msc_fakelatency_enable");
-				fakelat = SenseUI.Checkbox("Fakelatency enable", fakelat);
-				gui.SetValue("msc_fakelatency_enable", fakelat);
-				local fakelatkey = gui.GetValue("msc_fakelatency_key");
-				fakelatkey = SenseUI.Bind("flk", true, fakelatkey);
-				gui.SetValue("msc_fakelatency_key", fakelatkey);
-				local fakelatsl = (gui.GetValue("msc_fakelatency_amount") * 1000);
-				fakelatsl = SenseUI.Slider("Fakelatency amount", 0, 1000, "ms", "0ms", "1000ms", false, fakelatsl);
-				gui.SetValue("msc_fakelatency_amount", fakelatsl/1000);
-				local fakelagenable = gui.GetValue("msc_fakelag_enable");
-				fakelagenable = SenseUI.Checkbox("Fakelag enable", fakelagenable);
-				gui.SetValue("msc_fakelag_enable", fakelagenable);
+
+			if SenseUI.BeginGroup( "otheraim", "Other", 285, 25, 235, 250 ) then
+				local autorevolver = gui.GetValue("rbot_revolver_autocock");
+				local autoawpbody = gui.GetValue("rbot_sniper_autoawp");
+				local autopistol = gui.GetValue("rbot_pistol_autopistol");
+				local autoscope = (gui.GetValue("rbot_autosniper_autoscope") + 1);
+				local nospread = gui.GetValue("rbot_antispread");
+				nospread = SenseUI.Checkbox("Remove spread", nospread, true);
+				gui.SetValue("rbot_antispread", nospread);
+				local norecoil = gui.GetValue("rbot_antirecoil");
+				norecoil = SenseUI.Checkbox("Remove recoil", norecoil);
+				gui.SetValue("rbot_antirecoil", norecoil);
+				SenseUI.Label("Accuracy boost");	
+				local delayshot = (gui.GetValue("rbot_delayshot") + 1);				
+				delayshot = SenseUI.Combo("DS_rage", { "Off", "Accurate unlag", "Accurate history" }, delayshot);
+				gui.SetValue("rbot_delayshot", delayshot-1);
+				SenseUI.Label("Double tap", true);
+				local doubletap = gui.GetValue("rbot_chargerapidfire");
+				doubletap = SenseUI.Bind("doubletapss", true, doubletap);
+				gui.SetValue("rbot_chargerapidfire", doubletap);
+				SenseUI.Label("Auto scope");
+				autoscope = SenseUI.Combo("az_rage", { "Off", "On - auto unzoom", "On - no unzoom" }, autoscope);
+				gui.SetValue("rbot_autosniper_autoscope", autoscope-1);
+				gui.SetValue("rbot_sniper_autoscope", autoscope-1);
+				gui.SetValue("rbot_scout_autoscope", autoscope-1);
+				autorevolver = SenseUI.Checkbox("Auto revolver", autorevolver);
+				gui.SetValue("rbot_revolver_autocock", autorevolver);
+				autoawpbody = SenseUI.Checkbox("AWP body", autoawpbody);
+				gui.SetValue("rbot_sniper_autoawp", autoawpbody);
+				autopistol = SenseUI.Checkbox("Auto pistol", autopistol);
+				gui.SetValue("rbot_pistol_autopistol", autopistol);
+			
+				SenseUI.Label("Block Bot");
+				local blockbotmode = (gui.GetValue("msc_blockbot_mode") + 1);				
+				blockbotmode = SenseUI.Combo("block_bot", { "Match Speed", "Max Speed" }, blockbotmode);
+				gui.SetValue("msc_blockbot_mode", blockbotmode-1);
 				
-				local fakelagamount = gui.GetValue("msc_fakelag_value");
-				fakelagamount = SenseUI.Slider("Fakelag amount", 1, mpt+1, "", "1", mpt+1, false, fakelagamount);
-				gui.SetValue("msc_fakelag_value", fakelagamount);
-				SenseUI.Label("Fakelag mode");
-				local fakelagmode = (gui.GetValue("msc_fakelag_mode") + 1 );
-				fakelagmode = SenseUI.Combo("", { "Factor", "Switch", "Adaptive", "Random", "Peek", "Rapid Peek" }, fakelagmode);
-				gui.SetValue("msc_fakelag_mode", fakelagmode-1);
-				local fakelagewsh = gui.GetValue("msc_fakelag_attack");
-				fakelagewsh = SenseUI.Checkbox("Fakelag while shooting", fakelagewsh);
-				gui.SetValue("msc_fakelag_attack", fakelagewsh);
-				local fakelagwst = gui.GetValue("msc_fakelag_standing");
-				fakelagwst = SenseUI.Checkbox("Fakelag while standing", fakelagwst);
-				gui.SetValue("msc_fakelag_standing", fakelagwst);
-				local fakelagwund = gui.GetValue("msc_fakelag_unducking");
-				fakelagwund = SenseUI.Checkbox("Fakelag while unducking", fakelagwund);
-				gui.SetValue("msc_fakelag_unducking", fakelagwund);
-				SenseUI.Label("Fakelag style");
-				local fakelagstylell = (gui.GetValue("msc_fakelag_style") + 1 );
-				fakelagstylell = SenseUI.Combo("ssd", { "Always", "Avoid ground", "Hit ground" }, fakelagstylell);
-				gui.SetValue("msc_fakelag_style", fakelagstylell-1);
-				mpt = SenseUI.Slider("Max server process ticks", 1, 61, "", "1", "61" , false, mpt);
-				gui.SetValue("msc_fakelag_limit", mpt);
-			end
-			SenseUI.EndGroup();
+				local blockbotkey = gui.GetValue("msc_blockbot");
+				blockbotkey = SenseUI.Bind("blockbotkey", true, blockbotkey);
+				gui.SetValue("msc_blockbot", blockbotkey);
+				
+				end
+				SenseUI.EndGroup();
+				
 			if SenseUI.BeginGroup( "misc", "Miscellaneous", 25, 25, 235, 545 ) then
 				local msc_active = gui.GetValue("msc_active");
 				msc_active = SenseUI.Checkbox("Enable", msc_active);
