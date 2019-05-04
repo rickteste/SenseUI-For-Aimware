@@ -29,6 +29,90 @@ end
 
 --
 --
+-- Start AutoZues.lua
+--
+--
+
+local SetValue = gui.SetValue;
+
+local LGT_EXTRA_REF = gui.Reference( "LEGIT", "Extra" );
+
+local Auto_Zeus = gui.Combobox( LGT_EXTRA_REF, "lua_autozeus", "Auto Zeus", "Off", "Legitbot", "Ragebot" );
+
+callbacks.Register( 'Draw',  function()
+
+	if entities.GetLocalPlayer() == nil then
+		return
+	end
+
+	local LocalPlayerEntity = entities.GetLocalPlayer();
+	local WeaponID = LocalPlayerEntity:GetWeaponID();
+
+	if WeaponID == 31 then 
+		Taser = true
+	else
+		Taser = false
+	end
+
+end
+)
+
+local function AutoZeus()
+
+	if not gui.GetValue("lbot_active") then
+		return
+	end
+
+	if Auto_Zeus:GetValue() == 0 then
+		return
+	end
+
+	if Taser then
+		if Auto_Zeus:GetValue() == 1 then
+			SetValue( "rbot_active", 0 )
+			SetValue( "lbot_trg_enable", 1 )
+			SetValue( "lbot_trg_autofire", 1 )
+			SetValue( "lbot_trg_key", 0 )
+			SetValue( "lbot_trg_hitchance", 80 )
+			SetValue( "lbot_trg_mode", 3 )
+			SetValue( "lbot_trg_delay", 0 )
+			SetValue( "lbot_trg_burst", 0 )
+			SetValue( "lbot_trg_throughsmoke", 0 )
+		elseif Auto_Zeus:GetValue() == 2 then
+			SetValue( "lbot_trg_enable", 0 )
+			SetValue( "rbot_taser_hitchance", 80 )
+			SetValue( "rbot_active", 1 )
+			SetValue( "rbot_enable", 1 )
+			SetValue( "rbot_fov", 15 )
+			SetValue( "rbot_speedlimit", 1 )
+			SetValue( "rbot_silentaim", 1 )
+			if ( gui.GetValue( "lbot_positionadjustment" ) > 0 ) then
+				SetValue( "rbot_positionadjustment", 5 )
+			else
+				SetValue( "rbot_positionadjustment", 0 )
+			end
+		end
+	else
+		if Auto_Zeus:GetValue() == 1 then
+			SetValue( "lbot_trg_enable", 0 )
+		elseif Auto_Zeus:GetValue() == 2 then
+			SetValue( "rbot_active", 0 )
+		end
+	end
+
+end
+
+callbacks.Register( 'Draw', AutoZeus )
+
+
+--
+--
+-- End AutoZues.lua
+--
+--
+
+--
+--
 -- Start SmartFakeLag.lua
 --
 --
@@ -2969,6 +3053,8 @@ function draw_callback()
 				gui.SetValue("lua_fakelag_pistol", antitrig["Pistol"]);
 				gui.SetValue("lua_fakelag_revolver", antitrig["Revolver"]);
 				gui.SetValue("lua_fakelag_ping", antitrig["Ping"]);
+				
+				
 				SenseUI.EndGroup();
 
 			end
@@ -4466,7 +4552,7 @@ function draw_callback()
 		end
 		SenseUI.EndTab();
 		if SenseUI.BeginTab( "miscsettings", SenseUI.Icons.settings ) then
-			if SenseUI.BeginGroup("grpsasss", "CFG Load", 285, 315, 205, 300) then
+			if SenseUI.BeginGroup("grpsasss", "CFG Load", 285, 335, 205, 300) then
 				selected, scroll = SenseUI.Listbox(configs, 5, false, selected, nil, scroll)
 				
 				load_pressed = SenseUI.Button("Load", 155, 25)
@@ -4477,7 +4563,7 @@ function draw_callback()
 			end
 			SenseUI.EndGroup();
 
-			if SenseUI.BeginGroup( "otheraim", "Other", 285, 25, 235, 250 ) then
+			if SenseUI.BeginGroup( "otheraim", "Other", 285, 25, 235, 300 ) then
 				local autorevolver = gui.GetValue("rbot_revolver_autocock");
 				local autoawpbody = gui.GetValue("rbot_sniper_autoawp");
 				local autopistol = gui.GetValue("rbot_pistol_autopistol");
@@ -4517,6 +4603,10 @@ function draw_callback()
 				blockbotkey = SenseUI.Bind("blockbotkey", true, blockbotkey);
 				gui.SetValue("msc_blockbot", blockbotkey);
 				
+				local autozues = (gui.GetValue("lua_autozeus") + 1);
+				SenseUI.Label("Auto Zues");
+				autozues = SenseUI.Combo("AutoZues", {"Off", "Legit", "Rage"}, autozues);
+				gui.SetValue("lua_autozeus", autozues - 1);
 				end
 				SenseUI.EndGroup();
 				
@@ -4679,6 +4769,7 @@ function draw_callback()
 				SenseUI.Label("Brotgeschmack - creator of texture optimization in SenseUI", true);
 				SenseUI.Label("ambien55 - creator of cursor calling", true);
 				SenseUI.Label("Quit - creator of font fix", true);
+				SenseUI.Label("Yipp - added shit to it", true);
 				SenseUI.Label("", true);
 				SenseUI.Label("Guys my sub ends 31.03.19 and I wont buy it anymore", true);
 				SenseUI.Label("I leave from hvh and this game (nobody cares about that)", true);
