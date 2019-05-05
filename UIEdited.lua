@@ -29,6 +29,136 @@ end
 
 --
 --
+-- Start Speclist.lua
+--
+--
+
+local mouseX, mouseY, x, y, dx, dy, w, h, menuPressed = 0, 0, 25, 660, 0, 0, 300, 50, 1;
+local shouldDrag = false;
+local font_main = draw.CreateFont("SU-30SM", 18, 255);
+local font_spec = draw.CreateFont("SU-30SM", 18, 255);
+local topbarSize = 25;
+local ref = gui.Reference('MISC', "GENERAL", "Extra");
+local showMenu = gui.Checkbox(ref, "rab_material_spec_list", "Show Material Spectators Menu", false);
+--GUI Starts here 
+local mainWindow = gui.Window("rab_material_spec_list", "Material Spectators", 50, 50, 165, 180);
+local settings = gui.Groupbox(mainWindow, "Settings", 13, 13, 140, 120);
+local masterSwitch = gui.Checkbox(settings, "rab_material_spec_masterswitch", "Master Switch", false);
+local theme = gui.Combobox(settings, "rab_material_spec_theme", "Theme", "Light", "Dark", "Amoled");
+local hideBots = gui.Checkbox(settings, "rab_material_spec_hide_bots", "Hide Bots", false);
+local primary_color = { { 255, 140, 0 }, { 255, 140, 0 }, { 255, 140, 0 } };
+local secondary_color = { { 255, 140, 0 }, { 255, 140, 0 }, { 255, 140, 0 } }
+local text_color = { { 255, 140, 0 }, { 255, 140, 0 }, { 255, 140, 0 } }
+
+--This gets a player array of all the specatators that is specating our local player thanks to Cheeseot
+local function getSpectators()
+    local spectators = {};
+    local lp = entities.GetLocalPlayer();
+    if lp ~= nil then
+        local players = entities.FindByClass("CCSPlayer");
+        local specI = 1;
+        for i = 1, #players do
+            local player = players[i];
+            if player ~= lp and player:GetHealth() <= 0 then
+                local name = player:GetName();
+                if player:GetPropEntity("m_hObserverTarget") ~= nil then
+                    local playerindex = player:GetIndex();
+                    local ping = entities.GetPlayerResources():GetPropInt("m_iPing", playerindex);
+                    local shouldAdd = true;
+                    if(ping == 0) then
+                        if (hideBots:GetValue()) then
+                            shouldAdd = false;
+                        end
+                    end
+                        if name ~= "GOTV" and playerindex ~= 1 then
+                            local target = player:GetPropEntity("m_hObserverTarget");
+                            if target:IsPlayer() then
+                                local targetindex = target:GetIndex();
+                                local myindex = client.GetLocalPlayerIndex();
+                                if lp:IsAlive() then
+                                    if targetindex == myindex and shouldAdd then
+                                        spectators[specI] = player;
+                                        specI = specI + 1;
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return spectators;
+end
+
+--Adding this makes the top-bar draggable thanks to Ruppet.
+local function dragFeature()
+    if input.IsButtonDown(1) then
+        mouseX, mouseY = input.GetMousePos();
+        if shouldDrag then
+            x = mouseX - dx;
+            y = mouseY - dy;
+        end
+        if mouseX >= x and mouseX <= x + w and mouseY >= y and mouseY <= y + 40 then
+            shouldDrag = true;
+            dx = mouseX - x;
+            dy = mouseY - y;
+        end
+    else
+        shouldDrag = false;
+    end
+end
+
+local function getFadeRGB(speed)
+    local r = math.floor(math.sin((globals.RealTime()) * speed) * 127 + 128)
+    local g = math.floor(math.sin((globals.RealTime()) * speed + 2) * 127 + 128)
+    local b = math.floor(math.sin((globals.RealTime()) * speed + 4) * 127 + 128)
+    return { r, g, b };
+end
+
+--This draws the nice looking material window designed and developed by Rab
+local function drawWindow(spectators)
+    local h = h + (spectators * 17);
+
+end
+
+local function drawSpectators(spectators)
+    for index, player in pairs(spectators) do
+        draw.SetFont(font_spec);
+        local currentTheme = theme:GetValue() + 1;
+        local rgb = text_color;
+        draw.Color( 255, 140, 0 , 255);
+        draw.Text(x + 15, (y + topbarSize - 5) + (index * 17), player:GetName())
+    end;
+end
+
+local function handleGUI()
+    if input.IsButtonPressed(gui.GetValue("msc_menutoggle")) then
+        menuPressed = menuPressed == 0 and 1 or 0;
+    end
+    if (showMenu:GetValue()) then
+        mainWindow:SetActive(menuPressed);
+    else
+        mainWindow:SetActive(0);
+    end
+end
+
+callbacks.Register("Draw", function()
+    handleGUI();
+    if (masterSwitch:GetValue() ~= true) then return end;
+    dragFeature();
+    local spectators = getSpectators();
+    drawWindow(#spectators);
+    drawSpectators(spectators);
+end)
+
+--
+--
+-- End Speclist.lua
+--
+--
+
+--
+--
 -- Start AutoZues.lua
 --
 --
@@ -4552,7 +4682,7 @@ function draw_callback()
 		end
 		SenseUI.EndTab();
 		if SenseUI.BeginTab( "miscsettings", SenseUI.Icons.settings ) then
-			if SenseUI.BeginGroup("grpsasss", "CFG Load", 285, 335, 205, 300) then
+			if SenseUI.BeginGroup("grpsasss", "CFG Load", 285, 355, 205, 300) then
 				selected, scroll = SenseUI.Listbox(configs, 5, false, selected, nil, scroll)
 				
 				load_pressed = SenseUI.Button("Load", 155, 25)
@@ -4563,7 +4693,7 @@ function draw_callback()
 			end
 			SenseUI.EndGroup();
 
-			if SenseUI.BeginGroup( "otheraim", "Other", 285, 25, 235, 300 ) then
+			if SenseUI.BeginGroup( "otheraim", "Other", 285, 25, 235, 320 ) then
 				local autorevolver = gui.GetValue("rbot_revolver_autocock");
 				local autoawpbody = gui.GetValue("rbot_sniper_autoawp");
 				local autopistol = gui.GetValue("rbot_pistol_autopistol");
@@ -4607,6 +4737,13 @@ function draw_callback()
 				SenseUI.Label("Auto Zues");
 				autozues = SenseUI.Combo("AutoZues", {"Off", "Legit", "Rage"}, autozues);
 				gui.SetValue("lua_autozeus", autozues - 1);
+				
+				local speclist = (gui.GetValue("rab_material_spec_masterswitch"));
+				speclist = SenseUI.Checkbox("Spectator List", speclist);
+				gui.SetValue("rab_material_spec_masterswitch", speclist);
+
+
+				
 				end
 				SenseUI.EndGroup();
 				
