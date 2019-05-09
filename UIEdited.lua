@@ -1,5 +1,5 @@
 local cur_scriptname = GetScriptName()
-local cur_version = "1.1.1"
+local cur_version = "1.1.6"
 local git_version = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/version.txt"
 local git_repository = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/UIEdited.lua"
 local app_awusers = "http://api.shadyretard.io/awusers"
@@ -26,22 +26,22 @@ end
 
 -- Anti multiload
 
-
 --
 --
 -- Start Speclist.lua
 --
 --
 
-local mouseX, mouseY, x, y, dx, dy, w, h, menuPressed = 0, 0, 25, 660, 0, 0, 300, 50, 1;
-local shouldDrag = false;
-local font_main = draw.CreateFont("SU-30SM", 18, 255);
-local font_spec = draw.CreateFont("SU-30SM", 18, 255);
-local topbarSize = 25;
+local mouseX, mouseY, x, y, dx, dy, w, h, menuPressed = 0, 0, 10, 700, 0, 0, 300, 50, 1;
+local shouldDrag = 0;
+local font_main = draw.CreateFont("Impact", 23, 200);
+local font_spec = draw.CreateFont("Impact", 23, 200);
+local topbarSize = 0;
 local ref = gui.Reference('MISC', "GENERAL", "Extra");
 local showMenu = gui.Checkbox(ref, "rab_material_spec_list", "Show Material Spectators Menu", false);
---GUI Starts here 
-local mainWindow = gui.Window("rab_material_spec_list", "Material Spectators", 50, 50, 165, 180);
+
+--GUI Starts here
+local mainWindow = gui.Window("rab_material_spec_list", "Material Spectators", 50, 50, 200, 180);
 local settings = gui.Groupbox(mainWindow, "Settings", 13, 13, 140, 120);
 local masterSwitch = gui.Checkbox(settings, "rab_material_spec_masterswitch", "Master Switch", false);
 local theme = gui.Combobox(settings, "rab_material_spec_theme", "Theme", "Light", "Dark", "Amoled");
@@ -94,7 +94,7 @@ end
 local function dragFeature()
     if input.IsButtonDown(1) then
         mouseX, mouseY = input.GetMousePos();
-        if shouldDrag then
+        if shouldDrag == 1 then
             x = mouseX - dx;
             y = mouseY - dy;
         end
@@ -104,7 +104,7 @@ local function dragFeature()
             dy = mouseY - y;
         end
     else
-        shouldDrag = false;
+        shouldDrag = 0;
     end
 end
 
@@ -127,7 +127,7 @@ local function drawSpectators(spectators)
         local currentTheme = theme:GetValue() + 1;
         local rgb = text_color;
         draw.Color( 255, 140, 0 , 255);
-        draw.Text(x + 15, (y + topbarSize - 5) + (index * 17), player:GetName())
+        draw.Text(x + 0, (y + 0 - 5) + (index * 17), player:GetName())
     end;
 end
 
@@ -150,6 +150,7 @@ callbacks.Register("Draw", function()
     drawWindow(#spectators);
     drawSpectators(spectators);
 end)
+
 
 --
 --
@@ -4682,7 +4683,7 @@ function draw_callback()
 		end
 		SenseUI.EndTab();
 		if SenseUI.BeginTab( "miscsettings", SenseUI.Icons.settings ) then
-			if SenseUI.BeginGroup("grpsasss", "CFG Load", 285, 355, 205, 300) then
+			if SenseUI.BeginGroup("grpsasss", "CFG Load", 285, 355, 205, 290) then
 				selected, scroll = SenseUI.Listbox(configs, 5, false, selected, nil, scroll)
 				
 				load_pressed = SenseUI.Button("Load", 155, 25)
@@ -4738,12 +4739,9 @@ function draw_callback()
 				autozues = SenseUI.Combo("AutoZues", {"Off", "Legit", "Rage"}, autozues);
 				gui.SetValue("lua_autozeus", autozues - 1);
 				
-				local speclist = (gui.GetValue("rab_material_spec_masterswitch"));
-				speclist = SenseUI.Checkbox("Spectator List", speclist);
+				local speclist = gui.GetValue("rab_material_spec_masterswitch");
+				speclist = SenseUI.Checkbox("Spectators", speclist);
 				gui.SetValue("rab_material_spec_masterswitch", speclist);
-
-
-				
 				end
 				SenseUI.EndGroup();
 				
