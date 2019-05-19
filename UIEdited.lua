@@ -23,7 +23,7 @@ local function git_update()
 		print("[Lua Scripting] Changelog:" ..  http.Get(git_changelog))
 		vor:Close();
 	else
-		print("[Lua Scripting] " .. cur_scriptname .. " is up-to-date")
+		print("[Lua Scripting] " .. cur_scriptname .. " is being tested yeadgf")
 	end
 end
 
