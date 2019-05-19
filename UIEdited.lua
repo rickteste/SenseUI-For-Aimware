@@ -3,7 +3,7 @@ local cur_version = "1.1.7  "
 local git_version = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/version.txt"
 local git_repository = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/UIEdited.lua"
 local app_awusers = "http://api.shadyretard.io/awusers"
-local git_changelog = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/changelog.txt"
+local git_changelog = " https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/changelog.txt"
 
 
 -- Check for updates
