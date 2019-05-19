@@ -1,5 +1,5 @@
 local cur_scriptname = GetScriptName()
-local cur_version = "1.1.8"
+local cur_version = "1.1.7"
 local git_version = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/version.txt"
 local git_repository = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/UIEdited.lua"
 local app_awusers = "http://api.shadyretard.io/awusers"
@@ -43,18 +43,16 @@ local GAME_COMMAND_COOLDOWN = 40;
 local GRENADE_SAVE_FILE_NAME = "grenade_data.dat";
 local maps = {}
 
-local GH_WINDOW_ACTIVE = gui.Checkbox(gui.Reference("VISUALS", "MISC", "Assistance"), "GH_WINDOW_ACTIVE", "Grenade Helper", false);
-local GH_WINDOW = gui.Window("GH_WINDOW", "Grenade Helper", 200, 200, 450, 150);
-local GH_NEW_NADE_GB = gui.Groupbox(GH_WINDOW, "Add grenade throw", 15, 15, 200, 100);
+local GH_WINDOW = gui.Window("GH_WINDOW", "", 0, 0, 0, 0);
+local GH_NEW_NADE_GB = gui.Groupbox(GH_WINDOW, "", 0, 0, 0, 0);
 local GH_ENABLE_KEYBINDS = gui.Checkbox(GH_NEW_NADE_GB, "GH_ENABLE_KEYBINDS", "Enable Add Keybinds", false);
 local GH_ADD_KB = gui.Keybox(GH_NEW_NADE_GB, "GH_ADD_KB", "Add key", "");
 local GH_DEL_KB = gui.Keybox(GH_NEW_NADE_GB, "GH_DEL_KB", "Remove key", "");
 
-local GH_SETTINGS_GB = gui.Groupbox(GH_WINDOW, "Settings", 230, 15, 200, 100);
+local GH_SETTINGS_GB = gui.Groupbox(GH_WINDOW, "", 0, 0, 0, 0);
 local GH_HELPER_ENABLED = gui.Checkbox(GH_SETTINGS_GB, "GH_HELPER_ENABLED", "Enable Grenade Helper", false);
 local GH_VISUALS_DISTANCE_SL = gui.Slider(GH_SETTINGS_GB, "GH_VISUALS_DISTANCE_SL", "Display Distance", 800, 1, 9999);
 
-local window_show = false;
 local window_cb_pressed = true;
 local should_load_data = true;
 local last_action = globals.TickCount();
@@ -167,8 +165,6 @@ function drawEventHandler()
         should_load_data = false;
     end
 
-    showWindow();
-
     if (GH_HELPER_ENABLED:GetValue() == false) then
         return;
     end
@@ -250,19 +246,6 @@ function moveEventHandler(cmd)
     end
 end
 
-function showWindow()
-    window_show = GH_WINDOW_ACTIVE:GetValue();
-
-    if input.IsButtonPressed(gui.GetValue("msc_menutoggle")) then
-        window_cb_pressed = not window_cb_pressed;
-    end
-
-    if (window_show and window_cb_pressed) then
-        GH_WINDOW:SetActive(1);
-    else
-        GH_WINDOW:SetActive(0);
-    end
-end
 
 function loadData()
     local data_file = file.Open(GRENADE_SAVE_FILE_NAME, "r");
@@ -3737,18 +3720,6 @@ function draw_callback()
 				local adirection = (gui.GetValue("rbot_antiaim_autodir") + 1); 
 				adirection = SenseUI.Combo("adirection_rage", { "Off", "Default", "Desync", "Desync jitter" }, adirection);
 				gui.SetValue("rbot_antiaim_autodir", adirection-1);
-				local jitter_r = gui.GetValue("rbot_antiaim_jitter_range");
-				jitter_r = SenseUI.Slider("Jitter range", 0, 180, "°", "0°", "180°", false, jitter_r);
-				gui.SetValue("rbot_antiaim_jitter_range", jitter_r);
-				local spinbot_s = (gui.GetValue("rbot_antiaim_spinbot_speed") * 10);
-				spinbot_s = SenseUI.Slider("Spinbot speed", -200, 200, "", "-20", "20", false, spinbot_s);
-				gui.SetValue("rbot_antiaim_spinbot_speed", spinbot_s / 10);
-				local speedswitch = (gui.GetValue("rbot_antiaim_switch_speed") * 100);
-				speedswitch = SenseUI.Slider("Switch speed", 0, 100, "%", "0%", "100%", false, speedswitch);
-				gui.SetValue("rbot_antiaim_switch_speed", speedswitch / 100);
-				local switch_r = gui.GetValue("rbot_antiaim_switch_range");
-				switch_r = SenseUI.Slider("Switch range", 0, 180, "°", "0°", "180°", false, switch_r);
-				gui.SetValue("rbot_antiaim_switch_range", switch_r);
 				SenseUI.Label("Fake duck bind");
 				local fakeduck_bind = gui.GetValue("rbot_antiaim_fakeduck");
 				fakeduck_bind = SenseUI.Bind("fduck", true, fakeduck_bind);
@@ -3762,7 +3733,7 @@ function draw_callback()
 				gui.SetValue("rbot_antiaim_ladder", condition_aa["On ladder"]);
 				SenseUI.EndGroup();
 			end
-			if SenseUI.BeginGroup( "anti-aim", "Anti-Aim", 285, 25, 235, 285 ) then
+			if SenseUI.BeginGroup( "anti-aim", "Anti-Aim", 285, 25, 235, 310 ) then
 				SenseUI.Label("AA Mode Choose");
 				aa_choose = SenseUI.Combo( "aa_choose_rage", { "Stand", "Move", "Edge" }, aa_choose);
 				if aa_choose == 1 then
@@ -3770,16 +3741,50 @@ function draw_callback()
 					local pitch_stand = (gui.GetValue("rbot_antiaim_stand_pitch_real") + 1);
 					pitch_stand = SenseUI.Combo( "pitch_rage_stand", { "Off", "Emotion", "Down", "Up", "Zero", "Mixed", "Custom" }, pitch_stand);
 					gui.SetValue("rbot_antiaim_stand_pitch_real", pitch_stand-1);
-					local custom_pitch = gui.GetValue("rbot_antiaim_stand_pitch_custom");
-					custom_pitch = SenseUI.Slider( "Custom pitch", -180, 180, "°", "0°", "180°", false, custom_pitch);
-					gui.SetValue("rbot_antiaim_stand_pitch_custom", custom_pitch);
+					if pitch_stand == 7 then
+						local custom_pitch = gui.GetValue("rbot_antiaim_stand_pitch_custom");
+						custom_pitch = SenseUI.Slider( "Custom pitch", -180, 180, "°", "0°", "180°", false, custom_pitch);
+						gui.SetValue("rbot_antiaim_stand_pitch_custom", custom_pitch);
+					end
 					SenseUI.Label("Yaw");
 					local yaw_stand = (gui.GetValue("rbot_antiaim_stand_real") + 1);
 					yaw_stand = SenseUI.Combo( "just choose2", { "Off", "Static", "Spinbot", "Jitter", "Zero", "Switch" }, yaw_stand);
 					gui.SetValue("rbot_antiaim_stand_real", yaw_stand-1);
-					local custom_yaw = gui.GetValue("rbot_antiaim_stand_real_add");
-					custom_yaw = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw);
-					gui.SetValue("rbot_antiaim_stand_real_add", custom_yaw);
+					if yaw_stand == 2 then
+						local custom_yaw_stand = gui.GetValue("rbot_antiaim_stand_real_add");
+						custom_yaw_stand = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_stand);
+						gui.SetValue("rbot_antiaim_stand_real_add", custom_yaw_stand);
+					end
+					if yaw_stand == 3 then
+						local custom_yaw_stand = gui.GetValue("rbot_antiaim_stand_real_add");
+						custom_yaw_stand = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_stand);
+						gui.SetValue("rbot_antiaim_stand_real_add", custom_yaw_stand);
+					end
+					if yaw_stand == 6 then
+						local speedswitch = (gui.GetValue("rbot_antiaim_stand_switch_speed") * 100);
+						speedswitch = SenseUI.Slider("Switch speed", 0, 100, "%", "0%", "100%", false, speedswitch);
+						gui.SetValue("rbot_antiaim_stand_switch_speed", speedswitch / 100);
+						local switch_r = gui.GetValue("rbot_antiaim_stand_switch_range");
+						switch_r = SenseUI.Slider("Switch range", 0, 180, "°", "0°", "180°", false, switch_r);
+						gui.SetValue("rbot_antiaim_stand_switch_range", switch_r);
+						local custom_yaw_stand = gui.GetValue("rbot_antiaim_stand_real_add");
+						custom_yaw_stand = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_stand);
+						gui.SetValue("rbot_antiaim_stand_real_add", custom_yaw_stand);
+						
+					end
+					if yaw_stand == 3 then
+						local spinbot_s = (gui.GetValue("rbot_antiaim_stand_spinbot_speed") * 10);
+						spinbot_s = SenseUI.Slider("Spinbot speed", -200, 200, "", "-20", "20", false, spinbot_s);
+						gui.SetValue("rbot_antiaim_stand_spinbot_speed", spinbot_s / 10);
+					end
+					if yaw_stand == 4 then
+						local jitter_r = gui.GetValue("rbot_antiaim_stand_jitter_range");
+						jitter_r = SenseUI.Slider("Jitter range", 0, 180, "°", "0°", "180°", false, jitter_r);
+						gui.SetValue("rbot_antiaim_stand_jitter_range", jitter_r);
+						local custom_yaw_stand = gui.GetValue("rbot_antiaim_stand_real_add");
+						custom_yaw_stand = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_stand);
+						gui.SetValue("rbot_antiaim_stand_real_add", custom_yaw_stand);
+					end
 					SenseUI.Label("Yaw desync");
 					local desync_stand = (gui.GetValue("rbot_antiaim_stand_desync") + 1);
 					desync_stand = SenseUI.Combo( "just choose3", { "Off", "Still", "Balance", "Stretch", "Jitter" }, desync_stand);
@@ -3790,39 +3795,105 @@ function draw_callback()
 				else if aa_choose == 2 then
 					SenseUI.Label("Pitch");
 					local pitch_move = (gui.GetValue("rbot_antiaim_move_pitch_real") + 1);
-					pitch_move = SenseUI.Combo( "just choose4", { "Off", "Emotion", "Down", "Up", "Zero", "Mixed", "Custom" }, pitch_move);
+					pitch_move = SenseUI.Combo( "pitch_rage_move", { "Off", "Emotion", "Down", "Up", "Zero", "Mixed", "Custom" }, pitch_move);
 					gui.SetValue("rbot_antiaim_move_pitch_real", pitch_move-1);
-					local custom_pitch_move = gui.GetValue("rbot_antiaim_move_pitch_custom");
-					custom_pitch_move = SenseUI.Slider( "Custom pitch", -180, 180, "°", "0°", "180°", false, custom_pitch_move);
-					gui.SetValue("rbot_antiaim_move_pitch_custom", custom_pitch_move);
+					if pitch_move == 7 then
+						local custom_pitch_move = gui.GetValue("rbot_antiaim_stand_pitch_custom");
+						custom_pitch_move = SenseUI.Slider( "Custom pitch", -180, 180, "°", "0°", "180°", false, custom_pitch_move);
+						gui.SetValue("rbot_antiaim_move_pitch_custom", custom_pitch_move);
+					end
 					SenseUI.Label("Yaw");
 					local yaw_move = (gui.GetValue("rbot_antiaim_move_real") + 1);
-					yaw_move = SenseUI.Combo( "just choose5", { "Off", "Static", "Spinbot", "Jitter", "Zero", "Switch" }, yaw_move);
+					yaw_move = SenseUI.Combo( "just choose2", { "Off", "Static", "Spinbot", "Jitter", "Zero", "Switch" }, yaw_move);
 					gui.SetValue("rbot_antiaim_move_real", yaw_move-1);
-					local custom_yaw_move = gui.GetValue("rbot_antiaim_move_real_add");
-					custom_yaw_move = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_move);
-					gui.SetValue("rbot_antiaim_move_real_add", custom_yaw_move);
+					if yaw_move == 2 then
+						local custom_yaw_move = gui.GetValue("rbot_antiaim_move_real_add");
+						custom_yaw_move = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_move);
+						gui.SetValue("rbot_antiaim_move_real_add", custom_yaw_move);
+					end
+					if yaw_move == 3 then
+						local custom_yaw_move = gui.GetValue("rbot_antiaim_move_real_add");
+						custom_yaw_move = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_move);
+						gui.SetValue("rbot_antiaim_move_real_add", custom_yaw_move);
+					end
+					if yaw_move == 6 then
+						local speedswitch_move = (gui.GetValue("rbot_antiaim_move_switch_speed") * 100);
+						speedswitch_move = SenseUI.Slider("Switch speed", 0, 100, "%", "0%", "100%", false, speedswitch_move);
+						gui.SetValue("rbot_antiaim_stand_switch_speed", speedswitch_move / 100);
+						local switch_r_move = gui.GetValue("rbot_antiaim_move_switch_range");
+						switch_r_move = SenseUI.Slider("Switch range", 0, 180, "°", "0°", "180°", false, switch_r_move);
+						gui.SetValue("rbot_antiaim_move_switch_range", switch_r);
+						local custom_yaw_move = gui.GetValue("rbot_antiaim_move_real_add");
+						custom_yaw_move = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_move);
+						gui.SetValue("rbot_antiaim_move_real_add", custom_yaw_move);
+					end
+					if yaw_move == 3 then
+						local spinbot_s_move = (gui.GetValue("rbot_antiaim_move_spinbot_speed") * 10);
+						spinbot_s_move = SenseUI.Slider("Spinbot speed", -200, 200, "", "-20", "20", false, spinbot_s_move);
+						gui.SetValue("rbot_antiaim_move_spinbot_speed", spinbot_s_move / 10);
+					end
+					if yaw_move == 4 then
+						local jitter_r_move = gui.GetValue("rbot_antiaim_move_jitter_range");
+						jitter_r_move = SenseUI.Slider("Jitter range", 0, 180, "°", "0°", "180°", false, jitter_r_move);
+						gui.SetValue("rbot_antiaim_move_jitter_range", jitter_r_move);
+						local custom_yaw_move = gui.GetValue("rbot_antiaim_move_real_add");
+						custom_yaw_move = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_move);
+						gui.SetValue("rbot_antiaim_move_real_add", custom_yaw_move);
+					end
 					SenseUI.Label("Yaw desync");
 					local desync_move = (gui.GetValue("rbot_antiaim_move_desync") + 1);
 					desync_move = SenseUI.Combo( "just choose6", { "Off", "Still", "Balance", "Stretch", "Jitter" }, desync_move);
 					gui.SetValue("rbot_antiaim_move_desync", desync_move-1);
 				else if aa_choose == 3 then
-					local desync_edge = (gui.GetValue("rbot_antiaim_edge_desync") + 1);
-					local custom_pitch_edge = gui.GetValue("rbot_antiaim_edge_pitch_custom");
-					local custom_yaw_edge = gui.GetValue("rbot_antiaim_edge_real_add");
 					SenseUI.Label("Pitch");
 					local pitch_edge = (gui.GetValue("rbot_antiaim_edge_pitch_real") + 1);
-					pitch_edge = SenseUI.Combo( "just choose7", { "Off", "Emotion", "Down", "Up", "Zero", "Mixed", "Custom" }, pitch_edge);
+					pitch_edge = SenseUI.Combo( "pitch_rage_edge", { "Off", "Emotion", "Down", "Up", "Zero", "Mixed", "Custom" }, pitch_edge);
 					gui.SetValue("rbot_antiaim_edge_pitch_real", pitch_edge-1);
-					custom_pitch_edge = SenseUI.Slider( "Custom pitch", -180, 180, "°", "0°", "180°", false, custom_pitch_edge);
-					gui.SetValue("rbot_antiaim_edge_pitch_custom", custom_pitch_edge);
+					if pitch_edge == 7 then
+						local custom_pitch_edge = gui.GetValue("rbot_antiaim_edge_pitch_real");
+						custom_pitch_edge = SenseUI.Slider( "Custom pitch", -180, 180, "°", "0°", "180°", false, custom_pitch_edge);
+						gui.SetValue("rbot_antiaim_edge_pitch_real", custom_pitch_edge);
+					end
 					SenseUI.Label("Yaw");
 					local yaw_edge = (gui.GetValue("rbot_antiaim_edge_real") + 1);
-					yaw_edge = SenseUI.Combo( "just choose8", { "Off", "Static", "Spinbot", "Jitter", "Zero", "Switch" }, yaw_edge);
+					yaw_edge = SenseUI.Combo( "just choose2", { "Off", "Static", "Spinbot", "Jitter", "Zero", "Switch" }, yaw_edge);
 					gui.SetValue("rbot_antiaim_edge_real", yaw_edge-1);
-					custom_yaw_edge = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_edge);
-					gui.SetValue("rbot_antiaim_edge_real_add", custom_yaw_edge);
+					if yaw_edge == 2 then
+						local custom_yaw_edge = gui.GetValue("rbot_antiaim_edge_real_add");
+						custom_yaw_edge = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_edge);
+						gui.SetValue("rbot_antiaim_edge_real_add", custom_yaw_edge);
+					end
+					if yaw_edge == 3 then
+						local custom_yaw_edge = gui.GetValue("rbot_antiaim_edge_real_add");
+						custom_yaw_edge = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_edge);
+						gui.SetValue("rbot_antiaim_edge_real_add", custom_yaw_edge);
+					end
+					if yaw_edge == 6 then
+						local speedswitch_edge = (gui.GetValue("rbot_antiaim_edge_switch_speed") * 100);
+						speedswitch_edge = SenseUI.Slider("Switch speed", 0, 100, "%", "0%", "100%", false, speedswitch_edge);
+						gui.SetValue("rbot_antiaim_edge_switch_speed", speedswitch_edge / 100);
+						local switch_r_edge = gui.GetValue("rbot_antiaim_edge_switch_range");
+						switch_r_edge = SenseUI.Slider("Switch range", 0, 180, "°", "0°", "180°", false, switch_r_edge);
+						gui.SetValue("rbot_antiaim_edge_switch_range", switch_r_edge);
+						local custom_yaw_edge = gui.GetValue("rbot_antiaim_edge_real_add");
+						custom_yaw_edge = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_edge);
+						gui.SetValue("rbot_antiaim_edge_real_add", custom_yaw_edge);
+					end
+					if yaw_edge == 3 then
+						local spinbot_s_edge = (gui.GetValue("rbot_antiaim_edge_spinbot_speed") * 10);
+						spinbot_s_edge = SenseUI.Slider("Spinbot speed", -20, 20, "", "-20", "20", false, spinbot_s_edge);
+						gui.SetValue("rbot_antiaim_edge_spinbot_speed", spinbot_s_edge / 10);
+					end
+					if yaw_edge == 4 then
+						local jitter_r_edge = gui.GetValue("rbot_antiaim_edge_jitter_range");
+						jitter_r_edge = SenseUI.Slider("Jitter range", 0, 180, "°", "0°", "180°", false, jitter_r_edge);
+						gui.SetValue("rbot_antiaim_edge_jitter_range", jitter_r_edge);
+						local custom_yaw_edge = gui.GetValue("rbot_antiaim_edge_real_add");
+						custom_yaw_edge = SenseUI.Slider( "Custom yaw", -180, 180, "°", "0°", "180°", false, custom_yaw_edge);
+						gui.SetValue("rbot_antiaim_edge_real_add", custom_yaw_edge);
+					end
 					SenseUI.Label("Yaw desync");
+					local desync_edge = (gui.GetValue("rbot_antiaim_edge_desync") + 1);
 					desync_edge = SenseUI.Combo( "just choose9", { "Off", "Still", "Balance", "Stretch", "Jitter" }, desync_edge);
 					gui.SetValue("rbot_antiaim_edge_desync", desync_edge-1);
 				end
@@ -5485,7 +5556,7 @@ function draw_callback()
 						gui.SetValue("GH_HELPER_ENABLED", gehelperenabled);
 						
 						if gehelperenabled == true then
-							gehelperdist = SenseUI.Slider("View Distance", 0, 9999, "", "0", "9999", false, gehelperdist);
+							gehelperdist = SenseUI.Slider("View Distance", 0, 9999, " Units", "0", "9999", false, gehelperdist);
 							gui.SetValue("GH_VISUALS_DISTANCE_SL", gehelperdist);
 						end
 					end
@@ -5535,7 +5606,7 @@ local function OnFrameWarning()
 	end
 	draw.SetFont(font_warning)
 	draw.Text(0, 0, "[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
-	draw.Text(0, 10, "[Skillmeister] Changelog(Most Recent): Aimware updated and removed Callbacks, Should be fixed now")
+	draw.Text(0, 10, "[Lua Scripting] Changelog: Menu fixed, AA Tab fixed")
 end
 
 
