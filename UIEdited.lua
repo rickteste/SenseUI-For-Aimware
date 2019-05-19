@@ -3,6 +3,7 @@ local cur_version = "1.1.7"
 local git_version = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/version.txt"
 local git_repository = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/UIEdited.lua"
 local app_awusers = "http://api.shadyretard.io/awusers"
+local changelog = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/changelog.txt"
 
 
 -- Check for updates
@@ -13,6 +14,7 @@ local function git_update()
 		this_script:Close()
 		print("[Lua Scripting] " .. cur_scriptname .. " has updated itself from version " .. cur_version .. " to " .. http.Get(git_version))
 		print("[Lua Scripting] Please reload " .. cur_scriptname)
+		print("[Lua Scripting] Changelog:" .. changelog)
 	else
 		print("[Lua Scripting] " .. cur_scriptname .. " is up-to-date")
 	end
@@ -5606,7 +5608,6 @@ local function OnFrameWarning()
 	end
 	draw.SetFont(font_warning)
 	draw.Text(0, 0, "[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
-	draw.Text(0, 10, "[Lua Scripting] Changelog: Menu fixed, AA Tab fixed")
 end
 
 
