@@ -577,11 +577,6 @@ function removeFirstThrow(throw)
     end
 end
 
-client.AllowListener("player_say");
-callbacks.Register("FireGameEvent", "GH_EVENT", gameEventHandler);
-callbacks.Register("CreateMove", "GH_MOVE", moveEventHandler);
-callbacks.Register("Draw", "GH_DRAW", drawEventHandler);
-
 --
 --
 -- End GEHelper.lua
@@ -749,7 +744,6 @@ callbacks.Register( 'Draw',  function()
 
 end
 )
-
 local function AutoZeus()
 
 	if not gui.GetValue("lbot_active") then
@@ -795,7 +789,6 @@ local function AutoZeus()
 
 end
 
-callbacks.Register( 'Draw', AutoZeus )
 
 
 --
@@ -1036,15 +1029,6 @@ local function FakelagSmartMode()
     end
  
 end
- 
-callbacks.Register( "Draw", GetWeapon )
-callbacks.Register( "Draw", FakelagExtra )
-callbacks.Register( "Draw", FakelagOnPing )
-callbacks.Register( "Draw", FakelagOnSlowWalk )
-callbacks.Register( "Draw", FakelagSmartMode )
- 
--- Updater
-callbacks.Register( "Draw", Updater )
 --
 --
 -- End SmartFakeLag.lua
@@ -1254,7 +1238,6 @@ if gui.GetValue("lua_allow_http") and gui.GetValue("lua_allow_cfg") then
 	client.AllowListener("round_prestart")
 else
 	print("[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
-	callbacks.Register("Draw", OnFrameWarning)
 end
 
 --
@@ -3172,10 +3155,6 @@ SenseUI.Combo = gs_combo;
 SenseUI.MultiCombo = gs_multicombo;
 SenseUI.Listbox = gs_listbox;
 SenseUI.Textbox = gs_textbox;
-
--- Let's add some useless hook here to make aimware think that script loaded
-callbacks.Register( "CreateMove", "senseui", function( cmd ) end );
-print("[SenseUI] UI has been loaded!");
 
 list = 1;
 listScroll = 0;
@@ -5556,6 +5535,7 @@ local function OnFrameWarning()
 	end
 	draw.SetFont(font_warning)
 	draw.Text(0, 0, "[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
+	draw.Text(0, 10, "[Skillmeister] Changelog(Most Recent): Aimware updated and removed Callbacks, Should be fixed now")
 end
 
 
