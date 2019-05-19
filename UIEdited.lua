@@ -1,5 +1,6 @@
-local cur_scriptname = GetScriptName()
-local cur_version = "1.1.7  "
+local cur_scriptname = GetScriptName();
+local cur_version = "version.txt";
+local vers = file.Open(cur_version, "a");
 local git_version = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/version.txt"
 local git_repository = "https://raw.githubusercontent.com/Skillmeister/Gamesense-like-UI/master/UIEdited.lua"
 local app_awusers = "http://api.shadyretard.io/awusers"
@@ -8,13 +9,19 @@ local git_changelog = "https://raw.githubusercontent.com/Skillmeister/Gamesense-
 
 -- Check for updates
 local function git_update()
-	if cur_version ~= http.Get(git_version) then
+	if cur_version == http.Get(git_version) then
 		local this_script = file.Open(cur_scriptname, "w")
 		this_script:Write(http.Get(git_repository))
 		this_script:Close()
-		print("[Lua Scripting] " .. cur_scriptname .. " has updated itself from version " .. cur_version .. " to " .. http.Get(git_version))
+		local vers = file.Open(cur_version, "w");
+		vers:Write(http.Get(git_version));
+		vers:Close();
+		local vor = file.Open(cur_version, "r");
+		version = vor:Read();
+		print("[Lua Scripting] " .. cur_scriptname .. " has updated itself from version " .. version .. " to " .. http.Get(git_version))
 		print("[Lua Scripting] Please reload " .. cur_scriptname)
-		print("[Lua Scripting] Changelog: " ..  http.Get(git_changelog))
+		print("[Lua Scripting] Changelog:" ..  http.Get(git_changelog))
+		vor:Close();
 	else
 		print("[Lua Scripting] " .. cur_scriptname .. " is up-to-date")
 	end
@@ -5623,4 +5630,3 @@ else
 	print("[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
 	callbacks.Register("Draw", OnFrameWarning)
 end
-
