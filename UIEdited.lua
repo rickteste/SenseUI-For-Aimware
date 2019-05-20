@@ -3149,6 +3149,10 @@ SenseUI.MultiCombo = gs_multicombo;
 SenseUI.Listbox = gs_listbox;
 SenseUI.Textbox = gs_textbox;
 
+-- Let's add some useless hook here to make aimware think that script loaded
+callbacks.Register( "CreateMove", "senseui", function( cmd ) end );
+print("[SenseUI] UI has been loaded!");
+
 list = 1;
 listScroll = 0;
 listSearch = "";
