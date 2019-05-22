@@ -1,1 +1,1 @@
-Fixed a bug where the menu would disable after leaving/joining games
+Fixed some things not drawing on screen(Grenade Helper)
