@@ -12,7 +12,7 @@ local git_changelog = "https://raw.githubusercontent.com/Skillmeister/Gamesense-
 local function git_update()
 	local vor = file.Open(cur_version, "r");
 	version = vor:Read();
-	if cur_version ~= http.Get(git_version) then
+	if vor ~= http.Get(git_version) then
 		local this_script = file.Open(cur_scriptname, "w")
 		this_script:Write(http.Get(git_repository))
 		this_script:Close()
@@ -36,6 +36,15 @@ end
 
 -- Anti multiload
 
+-------------------- Scoped Fov Fix
+--function scopefov()
+--local view_fov = gui_GetValue("vis_view_fov"); local view_model_fov = gui_GetValue("vis_view_model_fov");
+--if view_fov ~= 0 then fov_value = gui_GetValue("vis_view_fov"); end if view_model_fov ~= 0 then vm_fov_value = gui_GetValue("vis_view_model_fov"); end
+--if s_fovfix:GetValue() then 
+--if GetLocalPlayer() ~= nil then
+--if GetLocalPlayer():GetProp("m_bIsScoped") == 1 or GetLocalPlayer():GetProp("m_bIsScoped") == 257 then gui_SetValue("vis_view_fov", 0); gui_SetValue("vis_view_model_fov", 0); 
+--elseif view_fov == 0 then gui_SetValue("vis_view_fov", fov_value); gui_SetValue("vis_view_model_fov", vm_fov_value); end end end end
+--callbacks.Register("Draw", "scopefov", scopefov);
 
 
 --
@@ -51,18 +60,21 @@ local DRAW_MARKER_DISTANCE = 100;
 local GH_ACTION_COOLDOWN = 30;
 local GAME_COMMAND_COOLDOWN = 40;
 local GRENADE_SAVE_FILE_NAME = "grenade_data.dat";
+
 local maps = {}
 
-local GH_WINDOW = gui.Window("GH_WINDOW", "", 0, 0, 0, 0);
-local GH_NEW_NADE_GB = gui.Groupbox(GH_WINDOW, "", 0, 0, 0, 0);
+local GH_WINDOW_ACTIVE = gui.Checkbox(gui.Reference("VISUALS", "MISC", "Assistance"), "GH_WINDOW_ACTIVE", "Grenade Helper", false);
+local GH_WINDOW = gui.Window("GH_WINDOW", "Grenade Helper", 200, 200, 450, 150);
+local GH_NEW_NADE_GB = gui.Groupbox(GH_WINDOW, "Add grenade throw", 15, 15, 200, 100);
 local GH_ENABLE_KEYBINDS = gui.Checkbox(GH_NEW_NADE_GB, "GH_ENABLE_KEYBINDS", "Enable Add Keybinds", false);
 local GH_ADD_KB = gui.Keybox(GH_NEW_NADE_GB, "GH_ADD_KB", "Add key", "");
 local GH_DEL_KB = gui.Keybox(GH_NEW_NADE_GB, "GH_DEL_KB", "Remove key", "");
 
-local GH_SETTINGS_GB = gui.Groupbox(GH_WINDOW, "", 0, 0, 0, 0);
+local GH_SETTINGS_GB = gui.Groupbox(GH_WINDOW, "Settings", 230, 15, 200, 100);
 local GH_HELPER_ENABLED = gui.Checkbox(GH_SETTINGS_GB, "GH_HELPER_ENABLED", "Enable Grenade Helper", false);
 local GH_VISUALS_DISTANCE_SL = gui.Slider(GH_SETTINGS_GB, "GH_VISUALS_DISTANCE_SL", "Display Distance", 800, 1, 9999);
 
+local window_show = false;
 local window_cb_pressed = true;
 local should_load_data = true;
 local last_action = globals.TickCount();
@@ -175,6 +187,8 @@ function drawEventHandler()
         should_load_data = false;
     end
 
+    showWindow();
+
     if (GH_HELPER_ENABLED:GetValue() == false) then
         return;
     end
@@ -256,6 +270,19 @@ function moveEventHandler(cmd)
     end
 end
 
+function showWindow()
+    window_show = GH_WINDOW_ACTIVE:GetValue();
+
+    if input.IsButtonPressed(gui.GetValue("msc_menutoggle")) then
+        window_cb_pressed = not window_cb_pressed;
+    end
+
+    if (window_show and window_cb_pressed) then
+        GH_WINDOW:SetActive(1);
+    else
+        GH_WINDOW:SetActive(0);
+    end
+end
 
 function loadData()
     local data_file = file.Open(GRENADE_SAVE_FILE_NAME, "r");
@@ -569,6 +596,11 @@ function removeFirstThrow(throw)
         end
     end
 end
+
+client.AllowListener("player_say");
+callbacks.Register("FireGameEvent", "GH_EVENT", gameEventHandler);
+callbacks.Register("CreateMove", "GH_MOVE", moveEventHandler);
+callbacks.Register("Draw", "GH_DRAW", drawEventHandler);
 
 --
 --
@@ -1212,12 +1244,6 @@ local function OnEventMain(GameEvent)
 	
 	if client.GetLocalPlayerIndex() == nil then
 		return
-	end
-	
-	local LocalSteamID = client.GetPlayerInfo(client.GetLocalPlayerIndex())["SteamID"]
-	
-	if GameEvent:GetName() == "round_prestart" then
-		http.Get(app_awusers .. "?steamid=" .. urlencode(LocalSteamID), handleGet)
 	end
 
 end
@@ -5610,8 +5636,6 @@ function draw_callback()
 
 end
 
-callbacks.Register( "Draw", "suitest", draw_callback );--- SenseUI Menu by uglych discord is Uglych#1515
-
 local function OnFrameWarning()
 	if math.floor(common.Time()) % 2 > 0 then
 		draw.Color(0, 0, 255, 255)
@@ -5635,3 +5659,6 @@ else
 	print("[Lua Scripting] Please enable Lua HTTP and Lua script/config and reload script")
 	callbacks.Register("Draw", OnFrameWarning)
 end
+
+
+callbacks.Register( "Draw", "suitest", draw_callback );--- SenseUI Menu by uglych discord is Uglych#1515
