@@ -1,1 +1,2 @@
 Fixed some things not drawing on screen(Grenade Helper)
+-The UI wont be getting updates for a while since I keep getting 24 hour IP bans from Aimware
